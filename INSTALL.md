@@ -1,3 +1,7 @@
 # Installation instructions
 
-Detailed instructions on how to install, configure, and get the project running.
+The scripts collectively require:
+ * Python >=3.8
+ * netCDF4
+ * numpy
+ * scipy >=1.5.0
