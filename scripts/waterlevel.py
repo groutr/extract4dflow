@@ -7,53 +7,7 @@ import netCDF4
 import numpy as np
 from scipy.spatial import cKDTree
 
-
-class BCFileWriter:
-    functions = {'timeseries'}
-
-    def __init__(self, filename):
-        self.filename = filename
-
-    def __enter__(self):
-        self._filehandle = open(self.filename, 'w')
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self._filehandle.close()
-
-    def add_forcing(self, name, function, units, data):
-        """Add forcing
-        Args:
-            name (str): Name
-            function (str): One of BCFileWriter.functions
-            units (list[tuples]): A list of tuples mapping column name to column units.
-                The ordering should match the ordering of the data columns.
-            data (Iterable of lists): Number of columns in data and len(units) must match.
-                Data will be iterated thru row by row
-        Returns:
-            None
-        """
-        if function not in self.functions:
-            raise ValueError("Invalid function")
-
-        fh = self._filehandle
-        fh.write("[forcing]\n")
-        fh.write(f"Name = {name}\n")
-        fh.write(f"Function = {function}\n")
-        fh.write(f"Time-interpolation = linear\n")
-        for i, (col, unit) in enumerate(units):
-            fh.write(f"Quantity = {col}\n")
-            fh.write(f"Unit = {unit}\n")
-
-        if isinstance(data, np.ndarray):
-            np.savetxt(fh, data, fmt='%f', delimiter=' ')
-        else:
-            for row in data:
-                fh.write(" ".join(map(str, row)))
-                fh.write("\n")
-
-        fh.write("\n")
-
+from common.io import BCFileWriter, read_pli
 
 
 def invalid_mask(var, chunksize=2**18):
@@ -83,19 +37,6 @@ def invalid_mask(var, chunksize=2**18):
         np.logical_not(rv_view, out=rv_view)
     return rv
 
-
-def read_pli(path):
-    index = []
-    with open(path) as fp:
-        name = next(fp).strip()  # Name row
-        shape = tuple(map(int, next(fp).split()))  # shape
-        values = np.empty(shape, dtype='float64')
-        for i, L in enumerate(fp):
-            L = L.split()
-            if L:
-                values[i] = L[:2]
-                index.append(L[2])
-    return {'name': name, 'index': index, 'values': values}
 
 def read_waterlevel(fort63, pli, bc_output):
     print("Reading PLI")
