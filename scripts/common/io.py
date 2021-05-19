@@ -67,6 +67,16 @@ def read_pli(path, step=1):
     return {'name': name, 'index': index, 'values': values}
 
 
+def read_polygon(path):
+    pts = []
+    with open(path) as fp:
+        for L in fp:
+            L = L.split()
+            if L:
+                pts.append(tuple(map(float, L)))
+    return pts
+
+
 def write_pli(path, pli):
     """Write a PLI file located at <path>
 
@@ -81,3 +91,4 @@ def write_pli(path, pli):
         out.write("\n")
         for (lon, lat), name in zip(pli['values'], pli['index']):
             out.write(f"{lon} {lat}  {name}\n")
+

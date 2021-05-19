@@ -1,7 +1,9 @@
 import argparse
 import pathlib
-
-from common.io import read_pli, write_pli
+import numpy as np
+from itertools import islice, compress
+from shapely.geometry import Point, Polygon
+from common.io import read_pli, write_pli, read_polygon
 
 
 def rename_points(pts):
@@ -24,9 +26,31 @@ def rename_points(pts):
         index[i] = f"{name.rsplit('_', 1)[0]}_{i_str}"
     return pts
 
+def clip_region(poly, pts):
+    """Clip a set of points to those points that lie in the
+    interior of a given polygon.
 
-def main(pli, output, n=1):
-    pli = read_pli(pli, step=n)
+    Arguments:
+      poly: List of points that define the polygon
+      pts: List of points to test
+    """
+    polygon = Polygon(poly)
+    interior = [polygon.contains(pt) for pt in map(Point, pts)]
+    return interior
+
+
+def main(pli, output, n=1, polygon=None):
+    pli = read_pli(pli)
+
+    if polygon:
+        P = read_polygon(polygon)
+        idxs = clip_region(P, pli['values'])
+        pli['values'] = pli['values'][idxs]
+        pli['index'] = list(compress(pli['index'], idxs))
+
+    new_index, new_values = zip(*islice(zip(pli['index'], pli['values']), 0, None, n))
+    pli['index'] = list(new_index)
+    pli['values'] = np.array(new_values)
     pli = rename_points(pli)
     write_pli(output, pli)
 
@@ -37,10 +61,10 @@ def get_options():
     parser.add_argument('pli', type=pathlib.Path, help="Path to PLI boundary file")
     parser.add_argument('-n', type=int, default=1, help="Decimation factor")
     parser.add_argument('-o', '--output', type=pathlib.Path, help="Output file path")
-
+    parser.add_argument("-c", "--clip", type=pathlib.Path, help="Use a polygon to select sites for output")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = get_options()
-    main(args.pli, args.output, args.n)
+    main(args.pli, args.output, args.n, polygon=args.clip)
