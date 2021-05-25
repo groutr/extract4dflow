@@ -68,12 +68,19 @@ def read_pli(path, step=1):
 
 
 def read_polygon(path):
-    pts = []
     with open(path) as fp:
-        for L in fp:
+        # Skip all lines that begin with '*' character at beginning of file
+        L = next(fp)
+        while L.lstrip().startswith('*'):
+            L = next(fp)
+
+        shape = list(map(int, next(fp).split()))
+        assert shape[1] == 2
+        pts = np.empty(shape, dtype='float64')
+        for i, L in enumerate(fp):
             L = L.split()
             if L:
-                pts.append(tuple(map(float, L)))
+                pts[i] = L
     return pts
 
 
@@ -91,4 +98,47 @@ def write_pli(path, pli):
         out.write("\n")
         for (lon, lat), name in zip(pli['values'], pli['index']):
             out.write(f"{lon} {lat}  {name}\n")
+
+def read_csv(path):
+    return np.recfromcsv(path, encoding=None)
+
+def read_ext(path):
+    """Read ext file and return list of forcing sections"""
+    sections = []
+    with open(path, 'r') as fin:
+        s = []
+        for L in map(str.strip, fin):
+            if not L:
+                continue
+
+            if L == "[boundary]" and s:
+                yield Block(s)
+                s = [L]
+            else:
+                s.append(L)
+    return sections
+
+class Block:
+    def __init__(self, block_lines):
+        self.data = {}
+
+        if block_lines[0][0] == '[' and block_lines[0][-1] == ']':
+            self._type = block_lines[0]
+        else:
+            raise ValueError("Invalid block")
+
+        for line in block_lines[1:]:
+            key, value = line.split('=')
+            self.data[key.strip()] = value.strip()
+
+    def __str__(self):
+        lines = [self._type]
+        for key, value in self.data.items():
+            lines.append(f"{key}={value}")
+        return "\n".join(lines)
+
+    @property
+    def type(self):
+        return self._type[1:-1]
+
 
