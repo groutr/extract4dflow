@@ -1,6 +1,80 @@
 from itertools import islice
 import math
 import numpy as np
+from tlz import take, drop, unique
+from tlz.curried import get
+
+class Fort53Parser:
+    def __init__(self, fort15, fort53):
+        self.fort15 = fort15
+        self.fort53 = fort53
+
+        self.freq = None
+        self.nodes = None
+
+    def _parse_freqs(self):
+        if self.freq is not None:
+            return
+
+        self.freq = []
+        with open(self.fort53) as fh:
+            nfreq = int(next(fh))
+            for i, line in enumerate(fh):
+                if i == nfreq:
+                    break
+                f = line.rsplit(None, 1)
+                self.freq.append(f[1])
+    
+    def _parse_grd(self):
+        if self.nodes is not None:
+            return
+
+        self.nodes = []
+        with open(self.fort15) as fh:
+            next(fh)
+            NE, NP = map(int, next(fh).split())
+            self.nodes = np.recfromtxt(fh, dtype='float64', max_rows=NP, names=('jn', 'lon', 'lat', 'depth'))
+
+    def node_coords(self):
+        self._parse_grd()
+        return np.asarray([self.nodes['lon'], self.nodes['lat']]).T
+
+    def read_freqs(self, nodes=None, freqs=None):
+        # Find the indexes for each freq
+        self._parse_grd()
+        self._parse_freqs()
+
+        if freqs is None:
+            freqs = self.freq
+        if nodes is None:
+            nodes = self.nodes['jn']
+        nodes = tuple(unique(nodes))
+
+        idxget = get(list(map(self.freq.index, freqs)))
+
+        rv = np.empty((len(nodes), len(freqs), 2), dtype='float64')
+        with open(self.fort53) as fh:
+            nfreq = int(next(fh))
+            # skip the next nfreq lines
+            fh = drop(nfreq, fh)
+            NP = int(next(fh))
+            assert NP == len(self.nodes)
+
+            nfreq = len(self.freq)
+            assert nfreq == len(self.freq)
+            for n in sorted(nodes):
+                node = int(next(fh))
+                while node < n:
+                    fh = drop(nfreq, fh)
+                    node = int(next(fh))
+                if node == n:
+                    block = idxget(list(take(nfreq, fh)))
+                    rv[nodes.index(n)] = np.loadtxt(block, dtype='float64')
+        return rv
+
+            
+
+
 
 class BCFileWriter:
     functions = {'timeseries'}
