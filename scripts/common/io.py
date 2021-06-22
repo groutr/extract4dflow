@@ -16,15 +16,16 @@ class Fort53Parser:
         if self.freq is not None:
             return
 
-        self.freq = []
+        freq = []
         with open(self.fort53) as fh:
             nfreq = int(next(fh))
             for i, line in enumerate(fh):
                 if i == nfreq:
                     break
                 f = line.rsplit(None, 1)
-                self.freq.append(f[1])
-    
+                freq.append(f[1])
+        self.freq = tuple(freq)
+        
     def _parse_grd(self):
         if self.nodes is not None:
             return
@@ -71,9 +72,6 @@ class Fort53Parser:
                     block = idxget(list(take(nfreq, fh)))
                     rv[nodes.index(n)] = np.loadtxt(block, dtype='float64')
         return rv
-
-            
-
 
 
 class BCFileWriter:
