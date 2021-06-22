@@ -5,9 +5,9 @@ import time
 import netCDF4
 #import h5netcdf.legacyapi as netCDF4
 import numpy as np
-from scipy.spatial import cKDTree
 
 from common.io import BCFileWriter, read_pli
+from common.geometry import kd_nearest_neighbor
 
 
 def invalid_mask(var, chunksize=2**18):
@@ -53,9 +53,8 @@ def read_waterlevel(fort63, pli, bc_output):
         adlons = np.ma.getdata(ds.variables['x'][mask])
         adlats = np.ma.getdata(ds.variables['y'][mask])
         print("Querying nearest points")
-        tree = cKDTree(np.column_stack([adlons, adlats]))
-        CN = tree.query(pli_data['values'])
-        stations = valid_stations[CN[1]]
+        _, CN = kd_nearest_neighbor(np.column_stack([adlons, adlats]), pli_data['values'])
+        stations = valid_stations[CN]
 
         time_col = ds.variables['time']
         ref_time = time_col.units.rstrip('UTC').rstrip()
