@@ -1,4 +1,5 @@
 from shapely.geometry import MultiPoint, Polygon
+from scipy.spatial import cKDTree
 
 
 def clip_point_to_roi(vertices, points):
@@ -18,4 +19,6 @@ def clip_point_to_roi(vertices, points):
         rv.append(polygon.contains(pt))
     return rv
 
-
+def kd_nearest_neighbor(vertices, points):
+    tree = cKDTree(vertices)
+    return tree.query(points)
