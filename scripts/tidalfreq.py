@@ -25,10 +25,10 @@ def main(args):
         if args.frequencies is None:
             freqs = src.freq
         else:
-            freqs = args.frequencies
-        freqs = tuple(dflow_re.sub("", x) for x in freqs)
-        for i, (n, F) in enumerate(src.read_freqs(nodes=nodes, freqs=args.frequencies)):
-            data = map(cons, freqs, F)
+            freqs = args.frequencies.read_text().splitlines()
+        outfreqs = tuple(dflow_re.sub("", x) for x in freqs)
+        for i, (n, F) in enumerate(src.read_freqs(nodes=nodes, freqs=freqs)):
+            data = map(cons, outfreqs, F)
             bc_out.add_forcing(pli['index'][idx_s[i]], "astronomic", units, data)
 
 
