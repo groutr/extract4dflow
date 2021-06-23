@@ -1,7 +1,7 @@
 from itertools import islice
 import math
 import numpy as np
-from tlz import take, drop, unique
+from tlz import take, drop
 from tlz.curried import get
 
 class Fort53Parser:
@@ -65,16 +65,19 @@ class Fort53Parser:
 
             nfreq = len(self.freq)
             assert nfreq == len(self.freq)
-            for n in nodes:
-                node = int(next(fh))
+            node = int(next(fh))
+            for i, n in enumerate(nodes):
                 if node > n:
                     raise RuntimeError
                 while node < n:
-                    fh = drop(nfreq, fh)
                     node = int(next(fh))
+                    if node != n:
+                        fh = drop(nfreq, fh)
                 if node == n:
-                    block = idxget(list(take(nfreq, fh)))
-                    yield np.loadtxt(block, dtype='float64')
+                    if i == 0 or nodes[i-1] != node:
+                        data = tuple(take(nfreq, fh))
+                        block = np.loadtxt(idxget(data), dtype=float)
+                    yield (node, block)
 
 
 class BCFileWriter:
