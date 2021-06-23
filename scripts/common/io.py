@@ -65,7 +65,7 @@ class Fort53Parser:
 
             nfreq = len(self.freq)
             assert nfreq == len(self.freq)
-            node = int(next(fh))
+            node = -1
             for i, n in enumerate(nodes):
                 if node > n:
                     raise RuntimeError
