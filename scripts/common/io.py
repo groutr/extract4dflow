@@ -25,12 +25,11 @@ class Fort53Parser:
                 f = line.rsplit(None, 1)
                 freq.append(f[1])
         self.freq = tuple(freq)
-        
+
     def _parse_grd(self):
         if self.nodes is not None:
             return
 
-        self.nodes = []
         with open(self.fort15) as fh:
             next(fh)
             NE, NP = map(int, next(fh).split())
@@ -41,19 +40,22 @@ class Fort53Parser:
         return np.asarray([self.nodes['lon'], self.nodes['lat']]).T
 
     def read_freqs(self, nodes=None, freqs=None):
+        """Read tidal frequencies for each node
+
+        Nodes is assumed to be sorted.
+        """
         # Find the indexes for each freq
         self._parse_grd()
         self._parse_freqs()
 
         if freqs is None:
             freqs = self.freq
+
         if nodes is None:
-            nodes = self.nodes['jn']
-        nodes = tuple(unique(nodes))
+            nodes = self.nodes['jn'].astype(int)
 
         idxget = get(list(map(self.freq.index, freqs)))
 
-        rv = np.empty((len(nodes), len(freqs), 2), dtype='float64')
         with open(self.fort53) as fh:
             nfreq = int(next(fh))
             # skip the next nfreq lines
@@ -63,19 +65,20 @@ class Fort53Parser:
 
             nfreq = len(self.freq)
             assert nfreq == len(self.freq)
-            for n in sorted(nodes):
+            for n in nodes:
                 node = int(next(fh))
+                if node > n:
+                    raise RuntimeError
                 while node < n:
                     fh = drop(nfreq, fh)
                     node = int(next(fh))
                 if node == n:
                     block = idxget(list(take(nfreq, fh)))
-                    rv[nodes.index(n)] = np.loadtxt(block, dtype='float64')
-        return rv
+                    yield np.loadtxt(block, dtype='float64')
 
 
 class BCFileWriter:
-    functions = {'timeseries'}
+    functions = {'timeseries', 'astronomic'}
 
     def __init__(self, filename):
         self.filename = filename
