@@ -1,6 +1,6 @@
 import argparse
 import pathlib
-from tlz import unique
+from tlz import cons
 
 from common.io import Fort53Parser, BCFileWriter, read_pli
 from common.geometry import kd_nearest_neighbor
@@ -8,6 +8,8 @@ from common.geometry import kd_nearest_neighbor
 
 def main(args):
     src = Fort53Parser(args.fort15, args.fort53)
+    src._parse_freqs()
+    src._parse_grd()
     pli = read_pli(args.pli)
 
     units = [('astronomic component', None),
@@ -18,10 +20,14 @@ def main(args):
         _, idx = kd_nearest_neighbor(src.node_coords(), pli['values'])
         idx_s = idx.argsort()
         nodes = src.nodes[idx[idx_s]]['jn']
+        if args.frequencies is None:
+            freqs = src.freq
+        else:
+            freqs = args.frequencies
+
         for i, (n, F) in enumerate(src.read_freqs(nodes=nodes, freqs=args.frequencies)):
-            assert n == idx[idx_s[i]]
-            data = zip(args.frequencies, F)
-            bc_out.add_forcing(pli['index'][i], "astronomical", units, data)
+            data = map(cons, freqs, F)
+            bc_out.add_forcing(pli['index'][idx_s[i]], "astronomic", units, data)
 
 
 def get_options():
