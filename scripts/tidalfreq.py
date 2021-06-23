@@ -1,5 +1,6 @@
 import argparse
 import pathlib
+from tlz import unique
 
 from common.io import Fort53Parser, BCFileWriter, read_pli
 from common.geometry import kd_nearest_neighbor
@@ -15,10 +16,12 @@ def main(args):
     
     with BCFileWriter(args.output) as bc_out:
         _, idx = kd_nearest_neighbor(src.node_coords, pli['values'])
-        nodes = src.nodes[idx]['jn']
-        data = src.read_freqs(nodes=nodes, freqs=args.frequencies)
-        for i, n in enumerate(pli['index']):
-            bc_out.add_forcing(n, "astronomical", units, zip(args.frequencies, data[i]))
+        idx_s = idx.argsort()
+        nodes = src.nodes[idx[idx_s]]['jn']
+        tidal_data = src.read_freqs(nodes=nodes, freqs=args.frequencies)
+        for i in idx_s:
+            data = zip(args.frequencies, next(tidal_data))
+            bc_out.add_forcing(pli['index'][i], "astronomical", units, data)
 
 
 def get_options():
