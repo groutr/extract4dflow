@@ -15,7 +15,7 @@ def main(args):
              ('waterlevelbnd phase', 'deg')]
     
     with BCFileWriter(args.output) as bc_out:
-        _, idx = kd_nearest_neighbor(src.node_coords, pli['values'])
+        _, idx = kd_nearest_neighbor(src.node_coords(), pli['values'])
         idx_s = idx.argsort()
         nodes = src.nodes[idx[idx_s]]['jn']
         tidal_data = src.read_freqs(nodes=nodes, freqs=args.frequencies)
