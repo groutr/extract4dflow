@@ -18,9 +18,9 @@ def main(args):
         _, idx = kd_nearest_neighbor(src.node_coords(), pli['values'])
         idx_s = idx.argsort()
         nodes = src.nodes[idx[idx_s]]['jn']
-        tidal_data = src.read_freqs(nodes=nodes, freqs=args.frequencies)
-        for i in idx_s:
-            data = zip(args.frequencies, next(tidal_data))
+        for i, (n, F) in enumerate(src.read_freqs(nodes=nodes, freqs=args.frequencies)):
+            assert n == idx[idx_s[i]]
+            data = zip(args.frequencies, F)
             bc_out.add_forcing(pli['index'][i], "astronomical", units, data)
 
 
