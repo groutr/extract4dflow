@@ -1,10 +1,12 @@
 import argparse
 import pathlib
+import re
 from tlz import cons
 
 from common.io import Fort53Parser, BCFileWriter, read_pli
 from common.geometry import kd_nearest_neighbor
 
+dflow_re = re.compile(r'\W')
 
 def main(args):
     src = Fort53Parser(args.fort15, args.fort53)
@@ -24,7 +26,7 @@ def main(args):
             freqs = src.freq
         else:
             freqs = args.frequencies
-
+        freqs = tuple(dflow_re.sub("", x) for x in freqs)
         for i, (n, F) in enumerate(src.read_freqs(nodes=nodes, freqs=args.frequencies)):
             data = map(cons, freqs, F)
             bc_out.add_forcing(pli['index'][idx_s[i]], "astronomic", units, data)
