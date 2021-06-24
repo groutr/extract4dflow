@@ -21,7 +21,7 @@ def main(args):
     src._parse_grd()
     pli = read_pli(args.pli)
 
-    units = [('astronomic component', None),
+    units = [('astronomic component', '-'),
              ('waterlevelbnd amplitude', 'm'),
              ('waterlevelbnd phase', 'deg')]
 
