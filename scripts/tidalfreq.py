@@ -1,12 +1,19 @@
 import argparse
 import pathlib
-import re
 from tlz import cons
 
 from common.io import Fort53Parser, BCFileWriter, read_pli
 from common.geometry import kd_nearest_neighbor
 
-dflow_re = re.compile(r'\W')
+
+def read_freq_map(path):
+    freq_map = {}
+    with open(path) as fin:
+        for L in fin:
+            k, v = L.split()
+            freq_map[k] = v
+    return freq_map
+
 
 def main(args):
     src = Fort53Parser(args.fort15, args.fort53)
@@ -17,18 +24,17 @@ def main(args):
     units = [('astronomic component', None),
              ('waterlevelbnd amplitude', 'm'),
              ('waterlevelbnd phase', 'deg')]
-    
+
     with BCFileWriter(args.output) as bc_out:
         _, idx = kd_nearest_neighbor(src.node_coords(), pli['values'])
         idx_s = idx.argsort()
         nodes = src.nodes[idx[idx_s]]['jn']
         if args.frequencies is None:
-            freqs = src.freq
+            freqs = {k: k for k in src.freq}
         else:
-            freqs = args.frequencies.read_text().splitlines()
-        outfreqs = tuple(dflow_re.sub("", x) for x in freqs)
-        for i, (n, F) in enumerate(src.read_freqs(nodes=nodes, freqs=freqs)):
-            data = map(cons, outfreqs, F)
+            freqs = read_freq_map(args.frequencies)
+        for i, (n, F) in enumerate(src.read_freqs(nodes=nodes, freqs=list(freqs.keys())):
+            data = map(cons, freqs.values(), F)
             bc_out.add_forcing(pli['index'][idx_s[i]], "astronomic", units, data)
 
 
