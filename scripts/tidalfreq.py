@@ -33,7 +33,7 @@ def main(args):
             freqs = {k: k for k in src.freq}
         else:
             freqs = read_freq_map(args.frequencies)
-        for i, (n, F) in enumerate(src.read_freqs(nodes=nodes, freqs=list(freqs.keys())):
+        for i, (n, F) in enumerate(src.read_freqs(nodes=nodes, freqs=list(freqs.keys()))):
             data = map(cons, freqs.values(), F)
             bc_out.add_forcing(pli['index'][idx_s[i]], "astronomic", units, data)
 
