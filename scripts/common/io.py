@@ -63,21 +63,26 @@ class Fort53Parser:
             NP = int(next(fh))
             assert NP == len(self.nodes)
 
-            nfreq = len(self.freq)
-            assert nfreq == len(self.freq)
-            node = -1
+            assert len(self.freq) == nfreq
+            node = int(next(fh))
             for i, n in enumerate(nodes):
+                if node - 1 == n:
+                    yield (node, block)
+                    continue
+
                 if node > n:
                     raise RuntimeError
-                while node < n:
+
+                if node < n:
+                    # How many lines to skip to node
+                    fh = drop((n-node) * (nfreq + 1) - 1, fh)
                     node = int(next(fh))
-                    if node != n:
-                        fh = drop(nfreq, fh)
                 if node == n:
                     if i == 0 or nodes[i-1] != node:
                         data = tuple(take(nfreq, fh))
                         block = np.loadtxt(idxget(data), dtype=float)
                     yield (node, block)
+                    node = int(next(fh))
 
 
 class BCFileWriter:
