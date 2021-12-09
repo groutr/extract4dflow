@@ -2,8 +2,8 @@ import argparse
 import pathlib
 import numpy as np
 from itertools import islice, compress
-from shapely.geometry import Point, Polygon
 from common.io import read_pli, write_pli, read_polygon
+from common.geometry import clip_point_to_roi
 
 
 def rename_points(pts):
@@ -26,25 +26,13 @@ def rename_points(pts):
         index[i] = f"{name.rsplit('_', 1)[0]}_{i_str}"
     return pts
 
-def clip_region(poly, pts):
-    """Clip a set of points to those points that lie in the
-    interior of a given polygon.
-
-    Arguments:
-      poly: List of points that define the polygon
-      pts: List of points to test
-    """
-    polygon = Polygon(poly)
-    interior = [polygon.contains(pt) for pt in map(Point, pts)]
-    return interior
-
 
 def main(args):
     pli = read_pli(args.pli)
 
     if args.polygon:
         P = read_polygon(args.polygon)
-        idxs = clip_region(P, pli['values'])
+        idxs = clip_point_to_roi(P, pli['values'])
         pli['values'] = pli['values'][idxs]
         pli['index'] = list(compress(pli['index'], idxs))
 
