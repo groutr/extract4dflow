@@ -249,7 +249,7 @@ def main(args):
     create_boundary_files(args.output_dir, data)
 
     # Write qlateral data
-    if args.qlats:
+    if args.qlat:
         data['qlateral'] = qlats
         create_qlat_tim_files(args.output_dir, data)
 
