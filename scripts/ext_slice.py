@@ -65,7 +65,7 @@ def get_options():
 def main(args):
 
     # read Boundary ID dataframe containing geospatial information
-    bnd_id_data = read_csv(args.boundary_csv, cols=["long", "lat", "boundaryid"])
+    bnd_id_data = read_csv(args.boundary_csv, cols=["long", "lat", "BoundaryID"])
     # extract polygon coordinate info from user defined file
     polygon_coords = read_polygon(args.polygon)
 
@@ -75,7 +75,7 @@ def main(args):
 
     if args.ext:
         ext_name = f"{args.ext.stem}_slice_{args.polygon.stem}{args.ext.suffix}"
-        exclude_blocks = set(itertools.compress(bnd_id_data["boundaryid"], ~poly_mask))
+        exclude_blocks = set(itertools.compress(bnd_id_data["BoundaryID"], ~poly_mask))
         create_ext_subdomain(args.ext, args.output_dir.joinpath(ext_name), exclude_blocks)
 
     if args.streamlines:

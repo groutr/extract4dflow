@@ -207,7 +207,8 @@ def main(args):
     # get the list of comm ids that need to be read
     print ("Finding comm IDs in CHRT netCDF")
     commdata = read_csv(args.comm_id_path)
-    comm_ids = commdata['nwmcommid']
+    comm_ids = np.asarray(commdata['NWMCommID'], dtype=int)
+    boundaryid = np.asarray(commdata["BoundaryID"])
 
     # mask = nwm streamflow mask for selected commids
     # fidx = array of indices to reorder selected commids to nwm streamflow order
@@ -220,7 +221,7 @@ def main(args):
     if args.qlat:
         qlats = np.ma.masked_all_like(streamflow)
     data = {'lat': lat, 'lon': lon,
-            'col_index': commdata[fidx]['boundaryid'],
+            'col_index': boundaryid[fidx],
             'row_index': list(files.keys())}
 
     print("Reading streamflow...")
@@ -236,9 +237,10 @@ def main(args):
     #streamflow = streamflow[:, selector_idx]
 
     # Multiply by flow direction
-    if "flowdir" in commdata.dtype.fields:
+    if "FlowDir" in commdata:
         print("Detected flow direction...")
-        streamflow *= commdata[fidx]["flowdir"]
+        fd = np.asarray(commdata["FlowDir"], dtype=int)[fidx]
+        streamflow *= fd
 
     # Set streamflow data
     data["streamflow"] = streamflow
