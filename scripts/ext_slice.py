@@ -48,6 +48,8 @@ def get_options():
                     help='The path of the polygon file defining the region of interest.')
     parser.add_argument('--ext', dest='ext', type=pathlib.Path,
                     help='The path of the original DFlow continetal mesh boundary ID ext file to extract boundary segments within polygon')
+    parser.add_argument('--streamlines', type=pathlib.Path,
+                    help='CSV file georeferencing boundary ids for lateral dicharges. This will be clipped to region of interest.')
     parser.add_argument('-o', '--output', dest='output_dir', default=pathlib.Path('.'), type=pathlib.Path,
                     help='The directory to write DFlow subdomain ext file to')
     args = parser.parse_args()
@@ -63,18 +65,25 @@ def get_options():
 def main(args):
 
     # read Boundary ID dataframe containing geospatial information
-    bnd_id_data = read_csv(args.boundary_csv)
+    bnd_id_data = read_csv(args.boundary_csv, cols=["long", "lat", "boundaryid"])
     # extract polygon coordinate info from user defined file
     polygon_coords = read_polygon(args.polygon)
 
     # Extract boundary point coordinates
-    bnd_pts = np.column_stack([bnd_id_data["long"], bnd_id_data["lat"]])
+    bnd_pts = np.column_stack([bnd_id_data["long"], bnd_id_data["lat"]]).astype(float)
     poly_mask = np.array(clip_point_to_roi(polygon_coords, bnd_pts), dtype='bool')
 
     if args.ext:
         ext_name = f"{args.ext.stem}_slice_{args.polygon.stem}{args.ext.suffix}"
-        exclude_blocks = set(bnd_id_data["boundaryid"][~poly_mask])
+        exclude_blocks = set(itertools.compress(bnd_id_data["boundaryid"], ~poly_mask))
         create_ext_subdomain(args.ext, args.output_dir.joinpath(ext_name), exclude_blocks)
+
+    if args.streamlines:
+        stl_name = f"{args.streamlines.stem}_slice_{args.polygon.stem}{args.streamlines.suffix}"
+        _data = read_csv(args.streamlines, usecols=['lat', 'lon'])
+        _pts = np.column_stack([_data['lon'], _data['lat']]).astype(float)
+        stl_mask = np.array(clip_point_to_roi(polygon_coords, _pts), dtype=bool)
+        create_csv_subdomain(args.streamlines, args.output_dir.joinpath(stl_name), stl_mask)
 
     csv_name = f"{args.boundary_csv.stem}_slice_{args.polygon.stem}{args.boundary_csv.suffix}"
     create_csv_subdomain(args.boundary_csv, args.output_dir.joinpath(csv_name), poly_mask)
