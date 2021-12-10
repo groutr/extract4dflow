@@ -14,7 +14,8 @@ FILE_KEYS = (
         "region",
         "fort63",
         "boundary_csv",
-        "global_boundary"
+        "global_boundary",
+        "streamlines"
 )
 
 DIR_KEYS = ("output_directory", "streamflow_input")
