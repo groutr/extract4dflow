@@ -115,6 +115,7 @@ def main(args):
     streamflow_args.start_time = start_time
     streamflow_args.stop_time = stop_time
     streamflow_args.input_dir = config["streamflow_input"]
+    streamflow_args.qlat = True
     sf_out = out_dir.joinpath(f"streamflow_slice_{region_stem}.bc")
     streamflow_args.output_dir = sf_out
     print(streamflow_args)
