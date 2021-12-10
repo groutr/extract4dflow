@@ -92,6 +92,7 @@ def main(args):
     ext_slice_args.boundary_csv = config["boundary_csv"]
     ext_slice_args.polygon = config["region"]
     ext_slice_args.ext = config["global_boundary"]
+    ext_slice_args.streamlines = config["streamlines"]
     ext_slice_args.output_dir = out_dir
     ext_slice.main(ext_slice_args)
     [ext_out] = list(out_dir.glob(f"*_slice_{region_stem}.ext"))
