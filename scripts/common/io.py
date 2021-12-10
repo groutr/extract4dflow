@@ -2,6 +2,7 @@ from itertools import islice
 import math
 import numpy as np
 import string
+import csv
 import operator
 from textwrap import dedent
 from tlz import take, drop
@@ -208,7 +209,7 @@ def read_csv(path, cols=None):
             row_append(col_slicer(row))
 
         return dict(zip(cols, zip(*row_append.__self__)))
-        
+
 
 def read_ext(path):
     """Read ext file and return list of forcing sections"""
