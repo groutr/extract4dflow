@@ -2,6 +2,7 @@ from itertools import islice
 import math
 import numpy as np
 import string
+import operator
 from textwrap import dedent
 from tlz import take, drop
 from tlz.curried import get
@@ -188,8 +189,26 @@ def write_pli(path, pli):
         for (lon, lat), name in zip(pli['values'], pli['index']):
             out.write(f"{lon} {lat}  {name}\n")
 
-def read_csv(path):
-    return np.recfromcsv(path, encoding=None)
+def read_csv(path, cols=None):
+    # We could use pandas here, but we need more of a
+    # justification than just reading a csv.
+    with open(path) as fin:
+        csvr = csv.reader(fin)
+        columns = next(csvr)
+
+        if not cols:
+            cols = columns
+            col_slicer = operator.itemgetter(slice(0, None))
+            row_append = [].append
+        else:
+            col_slicer = operator.itemgetter(*(columns.index(i) for i in cols))
+            row_append = [].append
+
+        for row in csvr:
+            row_append(col_slicer(row))
+
+        return dict(zip(cols, zip(*row_append.__self__)))
+        
 
 def read_ext(path):
     """Read ext file and return list of forcing sections"""
