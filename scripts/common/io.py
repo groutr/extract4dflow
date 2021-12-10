@@ -1,6 +1,8 @@
 from itertools import islice
 import math
 import numpy as np
+import string
+from textwrap import dedent
 from tlz import take, drop
 from tlz.curried import get
 
@@ -131,6 +133,9 @@ class BCFileWriter:
 
         fh.write("\n")
 
+def write_tim(path, data):
+    with open(path, 'w') as fh:
+        np.savetxt(fh, data, fmt='%f', delimiter=' ')
 
 def read_pli(path, step=1):
     index = []
@@ -173,6 +178,7 @@ def write_pli(path, pli):
     Args:
         path (pathlib.Path): File path
         pli (dict): PLI contents
+            PLI dictionary is keyed by 'name', 'values', and 'index'
     """
     with open(path, 'w') as out:
         out.write(pli['name'])
@@ -223,5 +229,64 @@ class Block:
     @property
     def type(self):
         return self._type[1:-1]
+
+
+def write_ext_v2(path, data):
+    """Write ext format v2
+
+    Arguments:
+        path: Path of file to write
+        data: List of dictionaries having the following keys:
+            id: id of node
+            name: name of node
+            x: Longitude coordinate
+            y: Latitude coordinate
+    
+    """
+    header = "[General]\nfileVersion = 2.00\nfileType = extForce\n"
+                    
+    template = string.Template(dedent("""
+            [lateral]
+            id = $id
+            name = $name
+            type = discharge
+            LocationType = all
+            numCoordinates = 1
+            xCoordinates = $x
+            yCoordinates = $y
+            discharge = BoundaryConditions.bc
+            """))
+
+    with open(path, mode='w') as ext_out:
+        ext_out.write(header)
+        for block in data:
+            ext_out.write(template.substitute(block))
+            ext_out.write("\n\n")
+
+def write_ext(path, data):
+    """Write legacy ext format
+
+    Arguments:
+        path: Path of file to write
+        data: list of dictionaries having the following keys:
+            filename: filename
+    """
+
+    template = string.Template(dedent("""
+    QUANTITY=discharge_salinity_temperature_sorsin
+    FILENAME=$filename
+    FILETYPE=9
+    METHOD=1
+    OPERAND=O
+    AREA=1"""))
+    with open(path, 'w') as ext_out:
+        ext_out.write("\n")
+        for d in data:
+            ext_out.write(template.substitute(d))
+            ext_out.write("\n\n")
+
+
+
+    
 
 

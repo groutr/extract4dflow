@@ -11,7 +11,7 @@ import cftime
 import argparse
 import operator
 
-from common.io import BCFileWriter, read_csv
+from common.io import BCFileWriter, read_csv, write_tim
 
 
 def binary_isin(elements, test_elements, assume_sorted=False, return_indices=False):
@@ -83,6 +83,12 @@ def extract_streamflow(current_netcdf_filename, idxs):
         stream_flow_vals = ncdata['streamflow'][idxs]
         return stream_flow_vals
 
+def extract_qlateral(current_netcdf_filename, idxs):
+    with nc.Dataset(current_netcdf_filename) as ncdata:
+        # extract qlateral
+        q_vals = ncdata['q_lateral'][idxs]
+        return q_vals
+
 # parse the comm ids from the first column of the com-id text file
 def read_comm_ids(comm_id_file: str):
     id_list = []
@@ -121,6 +127,20 @@ def create_boundary_files(output_dir: pathlib.Path, data: dict):
             ts = zip(date_index, v)
             print("Writing station:", commid, end='\r')
             bcwriter.add_forcing(commid, "timeseries", units, ts)
+
+
+def create_qlat_tim_files(output_dir: pathlib.Path, data: dict):
+    """Create DFlow tim files for q_lateral values
+
+    Args:
+        output_dir (pathlib.Path): Output directory
+        data (dict):
+    """
+    date_index = cftime.date2num(data['row_index'], 'seconds since 2000-01-01 00:00:00', calendar='julian')
+    values = data['qlateral']
+    for i, commid in enumerate(data['col_index']):
+        ts = zip(date_index, values[:, i])
+        write_tim(output_dir/f"{commid}.tim", ts)
 
 
 def get_inputfiles(input_path, start, end):
@@ -197,6 +217,8 @@ def main(args):
 
     #extract lat long and streamflow for the ids with stored offsets
     streamflow = np.ma.masked_array(np.zeros((len(files), len(comm_ids))), fill_value=-9999)
+    if args.qlat:
+        qlats = np.ma.masked_all_like(streamflow)
     data = {'lat': lat, 'lon': lon,
             'col_index': commdata[fidx]['boundaryid'],
             'row_index': list(files.keys())}
@@ -206,17 +228,26 @@ def main(args):
     for i, f in enumerate(files.values()):
         #extract streamflow for the comm ids with stored offsets
         streamflow[i] = extract_streamflow(f, mask)
+        if args.qlat:
+            qlats[i] = extract_qlateral(f, mask)
         print("{}/{} ({:.2%})".format(i, ffiles, i/ffiles).ljust(20), end="\r")
 
     # Reorder columns of streamflow to match col_index
     #streamflow = streamflow[:, selector_idx]
 
     # Multiply by flow direction
-    streamflow *= commdata[fidx]["flowdir"]
+    if "flowdir" in commdata.dtype.fields:
+        print("Detected flow direction...")
+        streamflow *= commdata[fidx]["flowdir"]
 
     # Set streamflow data
     data["streamflow"] = streamflow
     create_boundary_files(args.output_dir, data)
+
+    # Write qlateral data
+    if args.qlats:
+        data['qlateral'] = qlats
+        create_qlat_tim_files(args.output_dir, data)
 
 # Run main when this file is run
 if __name__ == "__main__":
