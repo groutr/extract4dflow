@@ -190,6 +190,8 @@ def get_options():
                     help='The directory that stores NWM streamflow input files')
     parser.add_argument('--output', dest='output_dir', required=True, type=pathlib.Path,
                     help='The directory to write timeslice files to')
+    parser.add_argument('--qlat', dest='qlat', action='store_true',
+                    help='Extract qlateral values along with streamflow.')
     #parser.add_argument('--route-link', dest='route_link', action='store', type=pathlib.Path,
     #                help='The routlink file for the NWM run which provided input data')
     args = parser.parse_args()
