@@ -80,7 +80,7 @@ def main(args):
 
     if args.streamlines:
         stl_name = f"{args.streamlines.stem}_slice_{args.polygon.stem}{args.streamlines.suffix}"
-        _data = read_csv(args.streamlines, usecols=['lat', 'lon'])
+        _data = read_csv(args.streamlines, cols=['lat', 'lon'])
         _pts = np.column_stack([_data['lon'], _data['lat']]).astype(float)
         stl_mask = np.array(clip_point_to_roi(polygon_coords, _pts), dtype=bool)
         create_csv_subdomain(args.streamlines, args.output_dir.joinpath(stl_name), stl_mask)
