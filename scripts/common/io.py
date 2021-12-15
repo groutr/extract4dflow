@@ -5,6 +5,7 @@ import string
 import csv
 import operator
 from textwrap import dedent
+from io import StringIO
 from tlz import take, drop
 from tlz.curried import get
 
@@ -92,6 +93,25 @@ class Fort53Parser:
 class BCFileWriter:
     functions = {'timeseries', 'astronomic'}
 
+    forcing_template = (
+        "[forcing]\n"
+        "Name = $name\n"
+        "Function = $function\n"
+        "Time-interpolation = linear"
+    )
+
+    lateral_template = (
+        "[lateral]\n"
+        "id = $id\n"
+        "name = $name\n"
+        "type = discharge\n"
+        "LocationType = all\n"
+        "numCoordinates = 1\n"
+        "xCoordinates = $x\n"
+        "yCoordinates = $y\n"
+        "discharge = $boundaryfile"
+    )
+
     def __init__(self, filename):
         self.filename = filename
 
@@ -114,26 +134,34 @@ class BCFileWriter:
         Returns:
             None
         """
-        if function not in self.functions:
-            raise ValueError("Invalid function")
-
-        fh = self._filehandle
-        fh.write("[forcing]\n")
-        fh.write(f"Name = {name}\n")
-        fh.write(f"Function = {function}\n")
-        fh.write(f"Time-interpolation = linear\n")
+        T = [string.Template(self.forcing_template).substitute(name=name, function=function)]
         for i, (col, unit) in enumerate(units):
-            fh.write(f"Quantity = {col}\n")
-            fh.write(f"Unit = {unit}\n")
-
+            T.append(f"Quantity = {col}")
+            T.append(f"Unit = {unit}")
+        
+        arr = StringIO()
         if isinstance(data, np.ndarray):
-            np.savetxt(fh, data, fmt='%f', delimiter=' ')
+            np.savetxt(arr, data, fmt='%f', delimiter=' ')
         else:
             for row in data:
-                fh.write(" ".join(map(str, row)))
-                fh.write("\n")
+                arr.write(" ".join(map(str, row)))
+                arr.write("\n")
+        
+        T.append(arr.getvalue())
+        self._write_str(T)
 
-        fh.write("\n")
+    def add_lateral(self, name, x, y, boundaryfile):
+        T = [string.Template(self.lateral_template).substitute(
+                id=name, name=name, x=x, y=y, boundaryfile=boundaryfile
+            )]
+        
+
+    def _write_str(self, lines):
+        for L in lines:
+            self._filehandle.write(L)
+            self._filehandle.write("\n")
+        self._filehandle.write("\n")
+
 
 def write_tim(path, data):
     with open(path, 'w') as fh:
