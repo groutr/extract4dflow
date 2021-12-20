@@ -133,7 +133,7 @@ def main(args):
     qlateral_args.stop_time = stop_time
     qlateral_args.input_dir = config["streamflow_input"]
     ql_out = out_dir.joinpath(f"qlateral_slice_{region_stem}")
-    ql_out.mkdir()
+    ql_out.mkdir(exist_ok=True)
     qlateral_args.output_dir = ql_out
     print(qlateral_args)
     qlateral.main(qlateral_args)
