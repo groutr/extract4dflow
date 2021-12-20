@@ -4,6 +4,7 @@ import numpy as np
 import string
 import csv
 import operator
+import datetime
 from textwrap import dedent
 from io import StringIO
 from tlz import take, drop
@@ -333,6 +334,29 @@ def write_ext(path, data):
             ext_out.write(template.substitute(d))
             ext_out.write("\n\n")
 
+
+def get_inputfiles(input_path, start, end):
+    """Generate list of files between start and end timestamps.
+
+    Args:
+        input_path (pathlib.Path): Directory to process
+        start (datetime.datetime): Start date
+        end (datetime.datetime): End date
+
+    Raises:
+        FileNotFoundError: Raised when a missing file is encountered
+
+    Returns:
+        (list): List of files matching date pattern
+    """
+    files = {}
+    fdate = start
+    one_hour = datetime.timedelta(hours=1)
+    chrt = next(input_path.glob("*.CHRTOUT_DOMAIN1"))
+    while fdate <= end:
+        files[fdate] = chrt.with_name(fdate.strftime('%Y%m%d%H%M.CHRTOUT_DOMAIN1'))
+        fdate += one_hour
+    return files
 
 
     
