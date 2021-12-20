@@ -6,7 +6,11 @@ import random
 import string
 import datetime
 
-import pli_decimate, waterlevel, streamflow, ext_slice
+import pli_decimate
+import ext_slice
+import waterlevel
+import streamflow
+import qlateral
 from common.io import read_ext
 
 FILE_KEYS = (
@@ -115,13 +119,25 @@ def main(args):
     streamflow_args.start_time = start_time
     streamflow_args.stop_time = stop_time
     streamflow_args.input_dir = config["streamflow_input"]
-    streamflow_args.qlat = True
     sf_out = out_dir.joinpath(f"streamflow_slice_{region_stem}.bc")
     streamflow_args.output_dir = sf_out
     print(streamflow_args)
     streamflow.main(streamflow_args)
     assert sf_out.exists()
     print(sf_out)
+
+    print("Lateral flow extraction...")
+    qlateral_args = argparse.Namespace()
+    qlateral_args.comm_id_path = config["boundary_csv"]
+    qlateral_args.start_time = start_time
+    qlateral_args.stop_time = stop_time
+    qlateral_args.input_dir = config["streamflow_input"]
+    ql_out = out_dir.joinpath(f"qlateral_slice_{region_stem}")
+    qlateral_args.output_dir = ql_out
+    print(qlateral_args)
+    qlateral.main(qlateral_args)
+    assert ql_out.exists()
+    print(ql_out)
 
     print("Updating boundary", ext_out)
     update_boundary(ext_out, wl_out.name, sf_out.name, pli_out.name)
