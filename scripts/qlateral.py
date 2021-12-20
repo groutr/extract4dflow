@@ -26,8 +26,10 @@ def create_qlat_tim_files(output_dir: pathlib.Path, data: dict):
     """
     date_index = cftime.date2num(data['row_index'], 'seconds since 2000-01-01 00:00:00', calendar='julian')
     values = data['qlateral']
+    ts = np.empty((len(date_index), 2), dtype=float)
+    ts[:, 0] = date_index
     for i, commid in enumerate(data['col_index']):
-        ts = zip(date_index, values[:, i])
+        ts[:, 1] = values[:, i]
         write_tim(output_dir/f"{commid}.tim", ts)
 
 
