@@ -37,7 +37,7 @@ def read_comm_ids(comm_id_file: str):
                 raise RuntimeError("Invalid comm id mapping detected")
     return id_list
 
-def create_boundary_files(output_dir: pathlib.Path, data: dict):
+def create_boundary_files(output: pathlib.Path, data: dict):
     """Create DFlow boundary files in bc text file format
 
     Args:
@@ -54,7 +54,7 @@ def create_boundary_files(output_dir: pathlib.Path, data: dict):
              ("dischargebnd", "m^3/s")]
     date_index = cftime.date2num(data['row_index'], units[0][1], calendar='julian')
     values = data['streamflow']
-    with BCFileWriter(output_dir/"streamflow") as bcwriter:
+    with BCFileWriter(output) as bcwriter:
         for i, commid in enumerate(data['col_index']):
             v = values[:, i]
             if v.mask.any():
