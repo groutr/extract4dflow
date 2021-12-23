@@ -21,8 +21,8 @@ def create_qlat_pli_files(output_dir: pathlib.Path, data: dict):
     for i, commid in enumerate(data['col_index']):
         lat = data['lat'][i]
         lon = data['lon'][i]
-        data = {'name': commid, 'values': np.array([[lon, lat]]), 'index': [commid]}
-        write_pli(output_dir/f"{commid}.pli", data)
+        _data = {'name': commid, 'values': np.array([[lon, lat]]), 'index': [commid]}
+        write_pli(output_dir/f"{commid}.pli", _data)
 
 def create_qlat_tim_files(output_dir: pathlib.Path, data: dict):
     """Create DFlow tim files for q_lateral values
