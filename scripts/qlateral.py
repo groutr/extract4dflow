@@ -7,7 +7,7 @@ import netCDF4 as nc
 import cftime
 
 from common.data import extract_lat_lon, extract_offsets
-from common.io import write_tim, get_inputfiles, read_csv
+from common.io import write_tim, get_inputfiles, read_csv, write_pli
 
 
 def extract_qlateral(current_netcdf_filename, idxs):
@@ -16,6 +16,13 @@ def extract_qlateral(current_netcdf_filename, idxs):
         q_vals = ncdata['q_lateral'][idxs]
         return q_vals
 
+
+def create_qlat_pli_files(output_dir: pathlib.Path, data: dict):
+    for i, commid in enumerate(data['col_index']):
+        lat = data['lat'][i]
+        lon = data['lon'][i]
+        data = {'name': commid, 'values': np.array([lon, lat]), 'index': [commid]}
+        write_pli(output_dir/f"{commid}.pli", data)
 
 def create_qlat_tim_files(output_dir: pathlib.Path, data: dict):
     """Create DFlow tim files for q_lateral values
@@ -67,6 +74,7 @@ def main(args):
     # Write qlateral data
     data['qlateral'] = qlats
     create_qlat_tim_files(args.output_dir, data)
+    create_qlat_pli_files(args.output_dir, data)
 
 
 def get_options():
