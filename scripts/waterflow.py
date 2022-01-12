@@ -30,11 +30,12 @@ def update_boundary(src_ext, wl, sf, pli):
     tmp = src_ext.parent.joinpath(''.join(fname))
     with open(tmp, 'w') as fout:
         for block in read_ext(src_ext):
-            if block.data['quantity'] == "waterlevelbnd":
-                block.data["locationfile"] = pli
-                block.data["forcingfile"] = wl
-            elif block.data['quantity'] == "dischargebnd":
-                block.data["forcingfile"] = sf
+            if 'quantity' in block.data:
+                if block.data['quantity'] == "waterlevelbnd":
+                    block.data["locationfile"] = pli
+                    block.data["forcingfile"] = wl
+                elif block.data['quantity'] == "dischargebnd":
+                    block.data["forcingfile"] = sf
             fout.write(str(block))
             fout.write("\n\n")
 
