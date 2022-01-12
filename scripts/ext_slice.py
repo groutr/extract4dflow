@@ -78,10 +78,10 @@ def main(args):
         ext_name = f"{args.ext.stem}_slice_{args.polygon.stem}{args.ext.suffix}"
         exclude_blocks = set(itertools.compress(bnd_id_data["NWMCommID"], ~poly_mask))
         output_ext = args.output_dir.joinpath(ext_name)
-        boundary_data = [{'id': row['NWMCommID'], 
-                            'name': row['NWMCommID'], 
-                            'x': row['long'], 'y': row['lat']}
-                         for row in itertools.compress(bnd_id_data, poly_mask)]
+        boundary_data = [{'id': row[2], 
+                            'name': row[2], 
+                            'x': row[0], 'y': row[1]}
+                         for row in itertools.compress(zip(*bnd_id_data.values()), poly_mask)]
         write_ext_v2(output_ext, boundary_data)
         create_ext_subdomain(args.ext, args.output_dir.joinpath(ext_name), exclude_blocks)
 
