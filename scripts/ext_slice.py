@@ -5,8 +5,7 @@ import csv
 import itertools
 
 from common.geometry import clip_point_to_roi
-from common.io import read_polygon, read_csv, read_ext
-from scripts.common.io import write_ext_v2
+from common.io import read_polygon, read_csv, read_ext, write_ext_v2
 
 
 def removesuffix(s, suffix):
