@@ -6,6 +6,7 @@ import itertools
 
 from common.geometry import clip_point_to_roi
 from common.io import read_polygon, read_csv, read_ext
+from scripts.common.io import write_ext_v2
 
 
 def removesuffix(s, suffix):
@@ -15,7 +16,8 @@ def removesuffix(s, suffix):
         return s
 
 def create_ext_subdomain(src_ext, dst_ext, mask):
-    with open(dst_ext, mode='w') as fout:
+    with open(dst_ext, mode='a') as fout:
+        fout.write("\n\n")
         for block in read_ext(src_ext):
             # check if location is masked
             if removesuffix(block.data['locationfile'], '.pli') not in mask:
@@ -76,6 +78,12 @@ def main(args):
     if args.ext:
         ext_name = f"{args.ext.stem}_slice_{args.polygon.stem}{args.ext.suffix}"
         exclude_blocks = set(itertools.compress(bnd_id_data["NWMCommID"], ~poly_mask))
+        output_ext = args.output_dir.joinpath(ext_name)
+        boundary_data = [{'id': row['NWMCommID'], 
+                            'name': row['NWMCommID'], 
+                            'x': row['long'], 'y': row['lat']}
+                         for row in itertools.compress(bnd_id_data, poly_mask)]
+        write_ext_v2(output_ext, boundary_data)
         create_ext_subdomain(args.ext, args.output_dir.joinpath(ext_name), exclude_blocks)
 
     if args.streamlines:
