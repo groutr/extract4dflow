@@ -280,7 +280,7 @@ class Block:
         return self._type[1:-1]
 
 
-def write_ext_v2(path, data):
+def write_ext_v2(path, data, mode='w'):
     """Write ext format v2
 
     Arguments:
@@ -306,13 +306,13 @@ def write_ext_v2(path, data):
             discharge = BoundaryConditions.bc
             """))
 
-    with open(path, mode='w') as ext_out:
+    with open(path, mode=mode) as ext_out:
         ext_out.write(header)
         for block in data:
             ext_out.write(template.substitute(block))
             ext_out.write("\n\n")
 
-def write_ext(path, data):
+def write_ext(path, data, mode='w'):
     """Write legacy ext format
 
     Arguments:
@@ -328,7 +328,7 @@ def write_ext(path, data):
     METHOD=1
     OPERAND=O
     AREA=1"""))
-    with open(path, 'w') as ext_out:
+    with open(path, mode=mode) as ext_out:
         ext_out.write("\n")
         for d in data:
             ext_out.write(template.substitute(d))
