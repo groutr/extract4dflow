@@ -248,8 +248,8 @@ def read_ext(path):
         for L in map(str.strip, fin):
             if not L:
                 continue
-
-            if L == "[boundary]" and s:
+            
+            if L.startswith('[') and L.endswith(']') and s:
                 yield Block(s)
                 s = [L]
             else:
