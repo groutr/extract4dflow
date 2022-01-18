@@ -39,7 +39,6 @@ def main(args):
     new_index, new_values = zip(*islice(zip(pli['index'], pli['values']), 0, None, args.n))
     pli['index'] = list(new_index)
     pli['values'] = np.array(new_values)
-    pli = rename_points(pli)
     write_pli(args.output, pli)
 
 
