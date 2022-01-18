@@ -17,6 +17,15 @@ from common.data import extract_lat_lon, extract_offsets
 
 # extract the lat long and streamflow for each comm ids
 def extract_streamflow(current_netcdf_filename, idxs):
+    """Extract streamflow for selected station indexes
+
+    Args:
+        current_netcdf_filename (Path): path to netcdf
+        idxs (list): indexes to select
+
+    Returns:
+        ndarray: streamflow values
+    """
 
     with nc.Dataset(current_netcdf_filename) as ncdata:
         # extract the streamflow
@@ -26,6 +35,17 @@ def extract_streamflow(current_netcdf_filename, idxs):
 
 # parse the comm ids from the first column of the com-id text file
 def read_comm_ids(comm_id_file: str):
+    """Read NWM CommID mapping
+
+    Args:
+        comm_id_file (str): path to mapping file
+
+    Raises:
+        RuntimeError: Invalid mapping
+
+    Returns:
+        (list): mapping of commid to label
+    """
     id_list = []
     with open(comm_id_file) as comm_ids:
         for line in comm_ids:
@@ -112,7 +132,7 @@ def main(args):
     #extract lat long and streamflow for the ids with stored offsets
     streamflow = np.ma.masked_array(np.zeros((len(files), len(comm_ids))), fill_value=-9999)
     data = {'lat': lat, 'lon': lon,
-            'col_index': boundaryid[fidx],
+            'col_index': comm_ids[fidx],
             'row_index': list(files.keys())}
 
     print("Reading streamflow...")
