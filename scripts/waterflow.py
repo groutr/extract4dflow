@@ -107,7 +107,7 @@ def main(args):
     print("Waterlevel extraction...")
     waterlevel_args = argparse.Namespace()
     waterlevel_args.fort63 = config["fort63"]
-    waterlevel_args.pli = pli_out
+    waterlevel_args.boundary_csv = config['boundary_csv']
     wl_out = out_dir.joinpath(f"waterlevel_slice_{region_stem}.bc")
     waterlevel_args.output = wl_out
     waterlevel.read_waterlevel(config["fort63"], pli_out, wl_out)
