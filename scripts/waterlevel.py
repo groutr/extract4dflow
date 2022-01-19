@@ -6,7 +6,7 @@ import netCDF4
 #import h5netcdf.legacyapi as netCDF4
 import numpy as np
 
-from common.io import BCFileWriter, read_pli
+from common.io import BCFileWriter, read_csv
 from common.geometry import kd_nearest_neighbor
 
 
@@ -38,9 +38,9 @@ def invalid_mask(var, chunksize=2**18):
     return rv
 
 
-def read_waterlevel(fort63, pli, bc_output):
-    print("Reading PLI")
-    pli_data = read_pli(pli)
+def read_waterlevel(fort63, bcsv, bc_output):
+    print("Reading Boundary CSV")
+    csv_data = read_csv(bcsv)
 
     with netCDF4.Dataset(fort63, mode='r') as ds:
         zeta = ds.variables['zeta']
@@ -52,8 +52,11 @@ def read_waterlevel(fort63, pli, bc_output):
         #adlats = ds.variables['y'][:][mask]
         adlons = np.ma.getdata(ds.variables['x'][mask])
         adlats = np.ma.getdata(ds.variables['y'][mask])
+
+        adpts = np.column_stack([adlons, adlats])
+        csvpts = np.column_stack([csv_data['long'], csv_data['lat']])
         print("Querying nearest points")
-        _, CN = kd_nearest_neighbor(np.column_stack([adlons, adlats]), pli_data['values'])
+        _, CN = kd_nearest_neighbor(adpts, csvpts)
         stations = valid_stations[CN]
 
         time_col = ds.variables['time']
@@ -63,13 +66,12 @@ def read_waterlevel(fort63, pli, bc_output):
         out_buf = np.empty((len(time_col), 2), dtype='float64')
         out_buf[:, 0] = time_col[:]
         if bc_output.is_dir():
-            bc_output = bc_output/f"{pli_data['name']}.bc"
+            bc_output = bc_output/f"waterlevel.bc"
 
         with BCFileWriter(bc_output) as bc_out:
             print("Writing BC output", bc_out.filename)
-            for name, station in zip(pli_data['index'], stations):
+            for name, station in zip(csv_data['NWMCommID'], stations):
                 print(f"Station {name} ({station})".ljust(50), end="\r")
-                #out_buf[:, 1] = zeta[:, station]
                 out_buf[:, 1] = np.ma.getdata(zeta[:, station])
                 bc_out.add_forcing(name, 'timeseries', units, out_buf)
         print()
@@ -78,13 +80,13 @@ def get_options():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('fort63', type=pathlib.Path, help="Adcirc fort.63.nc path")
-    parser.add_argument('pli', type=pathlib.Path, help="Path to PLI boundary file")
+    parser.add_argument('boundary_csv', type=pathlib.Path, help="Path to boundary csv file")
     parser.add_argument("-o", "--output", type=pathlib.Path, default=pathlib.Path('.'), help="Path to bc output directory. Default is current directory")
 
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = get_options()
-    read_waterlevel(args.fort63, args.pli, args.output)
+    read_waterlevel(args.fort63, args.boundary_csv, args.output)
 
 
