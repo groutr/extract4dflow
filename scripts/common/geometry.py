@@ -20,5 +20,14 @@ def clip_point_to_roi(vertices, points):
     return rv
 
 def kd_nearest_neighbor(vertices, points):
+    """Find nearest neighbors using KDtree
+
+    Args:
+        vertices (ndarray): A Nx2 array of vertices
+        points (ndarray): points to use to find nearest neighbors
+
+    Returns:
+        [type]: Nearest neighbors
+    """
     tree = cKDTree(vertices)
     return tree.query(points)
