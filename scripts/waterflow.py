@@ -110,7 +110,7 @@ def main(args):
     waterlevel_args.boundary_csv = config['boundary_csv']
     wl_out = out_dir.joinpath(f"waterlevel_slice_{region_stem}.bc")
     waterlevel_args.output = wl_out
-    waterlevel.read_waterlevel(config["fort63"], pli_out, wl_out)
+    waterlevel.main(waterlevel_args)
     assert wl_out.exists()
     print(wl_out)
 

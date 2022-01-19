@@ -38,11 +38,11 @@ def invalid_mask(var, chunksize=2**18):
     return rv
 
 
-def read_waterlevel(fort63, bcsv, bc_output):
+def main(args):
     print("Reading Boundary CSV")
-    csv_data = read_csv(bcsv)
+    csv_data = read_csv(args.boundary_csv)
 
-    with netCDF4.Dataset(fort63, mode='r') as ds:
+    with netCDF4.Dataset(args.fort63, mode='r') as ds:
         zeta = ds.variables['zeta']
         print("Masking invalid stations")
         mask = invalid_mask(zeta)
@@ -65,10 +65,10 @@ def read_waterlevel(fort63, bcsv, bc_output):
                  ('waterlevelbnd', 'm')]
         out_buf = np.empty((len(time_col), 2), dtype='float64')
         out_buf[:, 0] = time_col[:]
-        if bc_output.is_dir():
-            bc_output = bc_output/f"waterlevel.bc"
+        if args.output.is_dir():
+            args.output = args.output/f"waterlevel.bc"
 
-        with BCFileWriter(bc_output) as bc_out:
+        with BCFileWriter(args.output) as bc_out:
             print("Writing BC output", bc_out.filename)
             for name, station in zip(csv_data['NWMCommID'], stations):
                 print(f"Station {name} ({station})".ljust(50), end="\r")
@@ -87,6 +87,4 @@ def get_options():
 
 if __name__ == "__main__":
     args = get_options()
-    read_waterlevel(args.fort63, args.boundary_csv, args.output)
-
-
+    main(args)
