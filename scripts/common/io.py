@@ -101,18 +101,6 @@ class BCFileWriter:
         "Time-interpolation = linear"
     )
 
-    lateral_template = (
-        "[lateral]\n"
-        "id = $id\n"
-        "name = $name\n"
-        "type = discharge\n"
-        "LocationType = all\n"
-        "numCoordinates = 1\n"
-        "xCoordinates = $x\n"
-        "yCoordinates = $y\n"
-        "discharge = $boundaryfile"
-    )
-
     def __init__(self, filename):
         self.filename = filename
 
@@ -150,12 +138,6 @@ class BCFileWriter:
         
         T.append(arr.getvalue())
         self._write_str(T)
-
-    def add_lateral(self, name, x, y, boundaryfile):
-        T = [string.Template(self.lateral_template).substitute(
-                id=name, name=name, x=x, y=y, boundaryfile=boundaryfile
-            )]
-        
 
     def _write_str(self, lines):
         for L in lines:
