@@ -33,7 +33,7 @@ def create_qlat_bc_file(output_dir: pathlib.Path, data: dict):
             if v.mask.any():
                 continue
             ts = zip(date_index, v)
-            bcwriter.add_forcing(commid, "timeseries", units, ts)
+            bcwriter.add_forcing(f"{commid}_0001", "timeseries", units, ts)
 
 def create_qlat_pli_files(output_dir: pathlib.Path, data: dict):
     for i, commid in enumerate(data['col_index']):
@@ -67,7 +67,7 @@ def main(args):
     # get the list of comm ids that need to be read
     print ("Finding comm IDs in CHRT netCDF")
     commdata = read_csv(args.comm_id_path)
-    comm_ids = np.asarray(commdata['NWMCommID'], dtype=int)
+    comm_ids = np.asarray(commdata['NWMCommID'])
     boundaryid = np.asarray(commdata["BoundaryID"])
 
     # mask = nwm streamflow mask for selected commids
