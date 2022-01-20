@@ -7,7 +7,7 @@ import netCDF4 as nc
 import cftime
 
 from common.data import extract_lat_lon, extract_offsets
-from common.io import write_tim, get_inputfiles, read_csv, write_pli
+from common.io import write_tim, get_inputfiles, read_csv, write_pli, BCFileWriter
 
 
 def extract_qlateral(current_netcdf_filename, idxs):
@@ -16,6 +16,24 @@ def extract_qlateral(current_netcdf_filename, idxs):
         q_vals = ncdata['q_lateral'][idxs]
         return q_vals
 
+def create_qlat_bc_file(output_dir: pathlib.Path, data: dict):
+    """Create boundary condition file for lateral discharge
+
+    Args:
+        output_dir (pathlib.Path): output directory for BoundaryConditions.bc
+        data (dict): [description]
+    """
+    units = [("time", "minutes since 2000-01-01 00:00:00"),
+            ("lateral_discharge", "m^3/s")]
+    date_index = cftime.date2num(data['row_index'], units[0][1], calendar='julian')
+    values = data['qlateral']
+    with BCFileWriter(output_dir/"BoundaryConditions.bc") as bcwriter:
+        for i, commid in enumerate(data['col_index']):
+            v = values[:, i]
+            if v.mask.any():
+                continue
+            ts = zip(date_index, v)
+            bcwriter.add_forcing(commid, "timeseries", units, ts)
 
 def create_qlat_pli_files(output_dir: pathlib.Path, data: dict):
     for i, commid in enumerate(data['col_index']):
@@ -61,7 +79,7 @@ def main(args):
     #extract lat long and streamflow for the ids with stored offsets
     qlats = np.ma.masked_array(np.zeros((len(files), len(comm_ids))), fill_value=-9999)
     data = {'lat': lat, 'lon': lon,
-            'col_index': boundaryid[fidx],
+            'col_index': comm_ids[fidx],
             'row_index': list(files.keys())}
 
     print("Reading qlateral...")
@@ -75,6 +93,7 @@ def main(args):
     data['qlateral'] = qlats
     create_qlat_tim_files(args.output_dir, data)
     create_qlat_pli_files(args.output_dir, data)
+    create_qlat_bc_file(args.output_dir, data)
 
 
 def get_options():
