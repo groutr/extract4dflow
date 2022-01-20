@@ -102,12 +102,13 @@ def main(args):
     ext_slice_args.output_dir = out_dir
     ext_slice.main(ext_slice_args)
     [ext_out] = list(out_dir.glob(f"*_slice_{region_stem}.ext"))
+    [boundary_csv] = list(out_dir.glob(f"_slice_{region_stem}.csv"))
     print(ext_out)
 
     print("Waterlevel extraction...")
     waterlevel_args = argparse.Namespace()
     waterlevel_args.fort63 = config["fort63"]
-    waterlevel_args.boundary_csv = config['boundary_csv']
+    waterlevel_args.boundary_csv = boundary_csv
     wl_out = out_dir.joinpath(f"waterlevel_slice_{region_stem}.bc")
     waterlevel_args.output = wl_out
     waterlevel.main(waterlevel_args)
@@ -116,7 +117,7 @@ def main(args):
 
     print("Streamflow extraction...")
     streamflow_args = argparse.Namespace()
-    streamflow_args.comm_id_path = config["boundary_csv"]
+    streamflow_args.comm_id_path = boundary_csv
     streamflow_args.start_time = start_time
     streamflow_args.stop_time = stop_time
     streamflow_args.input_dir = config["streamflow_input"]
@@ -129,7 +130,7 @@ def main(args):
 
     print("Lateral flow extraction...")
     qlateral_args = argparse.Namespace()
-    qlateral_args.comm_id_path = config["boundary_csv"]
+    qlateral_args.comm_id_path = boundary_csv
     qlateral_args.start_time = start_time
     qlateral_args.stop_time = stop_time
     qlateral_args.input_dir = config["streamflow_input"]
