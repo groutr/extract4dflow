@@ -37,6 +37,15 @@ def binary_isin(elements, test_elements, assume_sorted=False, return_indices=Fal
         return mask
 
 def extract_lat_lon(current_netcdf_filename, idxs):
+    """Extract latitude and longitude from a netcdf file for a set of stations.
+    
+    Args:
+        current_netcdf_filename: path to netcdf
+        idxs: indexes of stations to read
+    
+    Returns:
+        (tuple): ndarrays for latitude and longitude respectively.
+    """
 
     with nc.Dataset(current_netcdf_filename) as ncdata:
         # extract the streamflow

@@ -7,6 +7,14 @@ from common.geometry import kd_nearest_neighbor
 
 
 def read_freq_map(path):
+    """Read tidal frequency map
+
+    Args:
+        path (Path): path to frequency map
+
+    Returns:
+        (dict): 
+    """
     freq_map = {}
     with open(path) as fin:
         for L in fin:
