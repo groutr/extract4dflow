@@ -27,7 +27,7 @@ def create_qlat_bc_file(output_dir: pathlib.Path, data: dict):
             ("lateral_discharge", "m^3/s")]
     date_index = cftime.date2num(data['row_index'], units[0][1], calendar='julian')
     values = data['qlateral']
-    with BCFileWriter(output_dir/"BoundaryConditions.bc") as bcwriter:
+    with BCFileWriter(output_dir) as bcwriter:
         for i, commid in enumerate(data['col_index']):
             v = values[:, i]
             if v.mask.any():
@@ -91,8 +91,8 @@ def main(args):
 
     # Write qlateral data
     data['qlateral'] = qlats
-    create_qlat_tim_files(args.output_dir, data)
-    create_qlat_pli_files(args.output_dir, data)
+    #create_qlat_tim_files(args.output_dir, data)
+    #create_qlat_pli_files(args.output_dir, data)
     create_qlat_bc_file(args.output_dir, data)
 
 
