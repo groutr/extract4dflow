@@ -102,7 +102,7 @@ def main(args):
     ext_slice_args.output_dir = out_dir
     ext_slice.main(ext_slice_args)
     [ext_out] = list(out_dir.glob(f"*_slice_{region_stem}.ext"))
-    [boundary_csv] = list(out_dir.glob(f"*_slice_{region_stem}.csv"))
+    [boundary_csv] = list(out_dir.glob(f"{config['boundary_csv'].stem}_slice_{region_stem}.csv"))
     print(ext_out)
 
     print("Waterlevel extraction...")
