@@ -36,7 +36,7 @@ def update_boundary(src_ext, wl, sf, ld, pli):
                     block.data["forcingfile"] = wl
                 elif block.data['quantity'] == "dischargebnd":
                     block.data["forcingfile"] = sf
-            if block._type == "lateral":
+            if block._type == "[lateral]":
                 block.data["discharge"] = ld
             fout.write(str(block))
             fout.write("\n\n")
