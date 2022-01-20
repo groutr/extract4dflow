@@ -25,7 +25,7 @@ FILE_KEYS = (
 DIR_KEYS = ("output_directory", "streamflow_input")
 
 
-def update_boundary(src_ext, wl, sf, pli):
+def update_boundary(src_ext, wl, sf, ld, pli):
     fname = random.choices(string.ascii_letters, k=8)
     tmp = src_ext.parent.joinpath(''.join(fname))
     with open(tmp, 'w') as fout:
@@ -36,6 +36,8 @@ def update_boundary(src_ext, wl, sf, pli):
                     block.data["forcingfile"] = wl
                 elif block.data['quantity'] == "dischargebnd":
                     block.data["forcingfile"] = sf
+            if block._type == "lateral":
+                block.data["discharge"] = ld
             fout.write(str(block))
             fout.write("\n\n")
 
@@ -142,7 +144,7 @@ def main(args):
     print(ql_out)
 
     print("Updating boundary", ext_out)
-    update_boundary(ext_out, wl_out.name, sf_out.name, pli_out.name)
+    update_boundary(ext_out, wl_out.name, sf_out.name, ql_out.name, pli_out.name)
 
 
 if __name__ == "__main__":
