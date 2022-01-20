@@ -39,7 +39,7 @@ def create_qlat_pli_files(output_dir: pathlib.Path, data: dict):
     for i, commid in enumerate(data['col_index']):
         lat = data['lat'][i]
         lon = data['lon'][i]
-        _data = {'name': commid, 'values': np.array([[lon, lat]]), 'index': [commid]}
+        _data = {'name': str(commid), 'values': np.array([[lon, lat]]), 'index': [commid]}
         write_pli(output_dir/f"{commid}.pli", _data)
 
 def create_qlat_tim_files(output_dir: pathlib.Path, data: dict):
@@ -67,7 +67,7 @@ def main(args):
     # get the list of comm ids that need to be read
     print ("Finding comm IDs in CHRT netCDF")
     commdata = read_csv(args.comm_id_path)
-    comm_ids = np.asarray(commdata['NWMCommID'])
+    comm_ids = np.asarray(commdata['NWMCommID'], dtype=int)
     boundaryid = np.asarray(commdata["BoundaryID"])
 
     # mask = nwm streamflow mask for selected commids
