@@ -6,27 +6,6 @@ from common.io import read_pli, write_pli, read_polygon
 from common.geometry import clip_point_to_roi
 
 
-def rename_points(pts):
-    """Rename pts so they are in ascending order
-
-    Assumes that index names are in the form of *_<number>.
-    This will completely replace number left padded to original width.
-
-    Modifies index in-place.
-
-    Args:
-        pts (dict): Contents of PLI boundary file
-    """
-    index = pts['index']
-    tmp = index[0].rsplit('_', 1)
-    assert len(tmp) == 2
-    pad_width = len(tmp[1])
-    for i, name in enumerate(index):
-        i_str = str(i+1).zfill(pad_width)
-        index[i] = f"{name.rsplit('_', 1)[0]}_{i_str}"
-    return pts
-
-
 def main(args):
     pli = read_pli(args.pli)
 
