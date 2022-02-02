@@ -1,3 +1,22 @@
+"""
+PLI Decimate script.
+
+Clip a PLI boundary to a desired polygon.
+
+Usage:
+python pli_decimate.py -c MyPolygon.txt -o Clipped.pli Boundary.pli
+    Clips Boundary.pli to the points that lie inside MyPolygon
+    and writes the result to Clipped.pli
+
+python pli_decimate.py -c MyPolygon.txt -o Clipped.pli -n 10 Boundary.pli
+    Clips Boundary.pli to the points that lie in inside MyPolygon.
+    When the output is written, only every 10th point is written to Clipped.pli.
+    Note that clipping happens before decimation.
+
+python pli_decimate.py -n 10 -o Decimated.pli Boundary.pli
+    Only do decimation of Boundary.pli by writing every 10th point to Decimated.pli
+"""
+
 import argparse
 import pathlib
 import numpy as np
