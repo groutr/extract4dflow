@@ -1,3 +1,16 @@
+"""
+Lateral discharge extraction script
+
+Extract lateral discharge values from NWMv2.1 and write output to DFlow BC output
+
+Usage:
+python qlateral.py --output output_dir/ --input NWMv2.1/output/ 
+    --start "2013-01-01_05:00:00" --end "2013-05-01_00:00:00" --comm_ids comms.csv
+
+    Extract lateral discharge from input directory between the dates of start and end
+    for the commids listed in comms.csv and write the resulting BC file to output_dir
+"""
+
 import argparse
 import datetime
 import pathlib
