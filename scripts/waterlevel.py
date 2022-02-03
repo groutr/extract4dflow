@@ -1,3 +1,15 @@
+"""
+Waterlevel extraction script
+
+Extract waterlevel values from ADCIRC and export in DFlow BC format.
+
+Usage:
+python waterlevel.py -o waterlevels.bc fort63.nc boundary.csv
+    Extract waterlevel values form fort63.nc for the points in boundary.csv
+    and export to waterlevels.bc.
+    Note that boundary should already represent the region of interest.
+"""
+
 import argparse
 import pathlib
 import time
