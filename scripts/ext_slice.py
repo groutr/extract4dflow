@@ -56,9 +56,7 @@ def get_options():
     args = parser.parse_args()
 
     # Validate that output_dir is an existing directory
-    if not args.output_dir.exists():
-        raise FileNotFoundError(args.output_dir)
-    elif not args.output_dir.is_dir():
+    if not args.output_dir.is_dir():
         raise NotADirectoryError(args.output_dir)
 
     return args
