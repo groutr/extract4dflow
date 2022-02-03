@@ -1,3 +1,14 @@
+"""
+EXT slice
+
+Extract region of interest subset from boundary csv and
+optionally slice EXT and streamlines to same region of interest.
+
+Usage:
+python ext_slice.py -o output_dir/ boundary.csv MyPolygon.txt
+    Clip boundary.csv to the region of interest described by MyPolygon.txt
+"""
+
 import argparse
 import pathlib
 import numpy as np
@@ -33,9 +44,7 @@ def create_csv_subdomain(src_csv, dst_csv, mask):
         csvw = csv.writer(fout)
         with open(src_csv, 'r') as fin:
             csvr = csv.reader(fin)
-
             csvw.writerow(next(csvr))
-
             for row in itertools.compress(csvr, mask):
                 csvw.writerow(row)
 
