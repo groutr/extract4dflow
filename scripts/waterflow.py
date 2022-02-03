@@ -1,3 +1,26 @@
+"""
+Automation script for workflow.
+
+All arguments are contained within a JSON file. The general workflow is
+
+pli_decimate / ext_slice -> waterlevel / streamflow / lateral discharge
+
+First the domain is clipped to the region of interest using pli_decimate and ext_slice.
+Then waterlevel/streamflow/qlateral extraction is run on the outputs clipped to ROI.
+
+The keys in the JSON file that need to be defined are:
+start_time: Start time of simulation (YYYY-MM-DD_HH:MM:SS)
+stop_time: Stop time of the simulation (YYYY-MM_DD_HH:MM:SS)
+global_pli: PLI input
+global_boundary: DFlow EXT boundary
+region: Polygon file (1 vertex per line)
+boundary_csv: Inflow boundary conditions
+streamlines: Georeferencing of streamlines
+fort63: ADCIRC output (netcdf format)
+streamflow_input: Directory for streamflow data files
+
+"""
+
 import argparse
 import json
 import pathlib
