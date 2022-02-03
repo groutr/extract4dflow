@@ -1,3 +1,16 @@
+"""
+Streamflow extraction script
+
+Extract streamflow values from NWMv2.1 and write output to DFlow BC output
+
+Usage:
+python streamflow.py --output output_dir/ --input NWMv2.1/output/ 
+    --start "2013-01-01_05:00:00" --end "2013-05-01_00:00:00" --comm_ids comms.csv
+
+    Extract streamflow from input directory between the dates of start and end
+    for the commids listed in comms.csv and write the resulting BC file to output_dir
+"""
+
 # This script is intended to extract streamflow data from NWM v2.1 results
 # to be used to provide streamflow forcing for a subset domain
 #
