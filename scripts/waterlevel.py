@@ -3,7 +3,6 @@ import pathlib
 import time
 
 import netCDF4
-#import h5netcdf.legacyapi as netCDF4
 import numpy as np
 
 from common.io import BCFileWriter, read_csv
