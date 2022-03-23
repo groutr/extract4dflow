@@ -15,6 +15,7 @@ import argparse
 import pathlib
 import numpy as np
 import xarray as xr
+import cftime
 
 from common.io import read_pli, BCFileWriter
 from common.geometry import kd_nearest_neighbor
@@ -45,30 +46,30 @@ def main(args):
     utan = np.append(utan, np.atleast_2d(utan[-1]), axis=0)
     unorm = np.append(unorm, np.atleast_2d(unorm[-1]), axis=0)
 
-    with xr.open_dataset(args.fort64) as DS:
+    with xr.open_dataset(args.fort64, drop_variables=['neta', 'nvel'], use_cftime=True) as DS:
         vertices = np.column_stack((DS.x.values, DS.y.values))
         _, nodes = kd_nearest_neighbor(vertices, pts)
         U = DS['u-vel']
         V = DS['v-vel']
 
-        ref_time = DS.variables['time'].base_date.rstrip('UTC').rstrip()
+        ref_time = f"seconds since {DS['time'].values[0]}"
         tunits = [('time', ref_time),
                 ('tangentialvelocitybnd', 'm/s')]
         nunits = [('time', ref_time),
                 ('normalvelocitybnd', 'm/s')]
 
-        out_buf = np.empty((len(DS.variables['time']), 2), dtype='float64')
-        out_buf[:, 0] = DS.variables['time'].values
+        out_buf = np.empty((len(DS['time']), 2), dtype='float64')
+        out_buf[:, 0] = cftime.date2num(DS['time'].values, ref_time, calendar='julian') 
         with BCFileWriter(args.output/"TangentVelocity.bc") as tan_out:
             with BCFileWriter(args.output/"NormalVelocity.bc") as nor_out:
-                for name, n in zip(pli_values['index'], nodes):
+                for i, (name, n) in enumerate(zip(pli_values['index'], nodes)):
                     print(f"Station {name}".ljust(50), end="\r")
                     uv = U[:, n].values
                     vv = V[:, n].values
-                    out_buf[:, 1] = project_unit(utan, uv, vv)
+                    out_buf[:, 1] = project_unit(utan[i, np.newaxis], uv, vv)
                     tan_out.add_forcing(name, 'timeseries', tunits, out_buf)
 
-                    out_buf[:, 1] = project_unit(unorm, uv, vv)
+                    out_buf[:, 1] = project_unit(unorm[i, np.newaxis], uv, vv)
                     nor_out.add_forcing(name, 'timeseries', nunits, out_buf)
                 print()
 
