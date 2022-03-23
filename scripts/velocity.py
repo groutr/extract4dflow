@@ -59,18 +59,18 @@ def main(args):
 
         out_buf = np.empty((len(DS.variables['time']), 2), dtype='float64')
         out_buf[:, 0] = DS.variables['time'].values
-        with (BCFileWriter(args.output/"TangentVelocity.bc") as tan_out, 
-                BCFileWriter(args.output/"NormalVelocity.bc") as nor_out):
-            for name, n in zip(pli_values['index'], nodes):
-                print(f"Station {name}".ljust(50), end="\r")
-                uv = U[:, n].values
-                vv = V[:, n].values
-                out_buf[:, 1] = project_unit(utan, uv, vv)
-                tan_out.add_forcing(name, 'timeseries', tunits, out_buf)
+        with BCFileWriter(args.output/"TangentVelocity.bc") as tan_out:
+            with BCFileWriter(args.output/"NormalVelocity.bc") as nor_out:
+                for name, n in zip(pli_values['index'], nodes):
+                    print(f"Station {name}".ljust(50), end="\r")
+                    uv = U[:, n].values
+                    vv = V[:, n].values
+                    out_buf[:, 1] = project_unit(utan, uv, vv)
+                    tan_out.add_forcing(name, 'timeseries', tunits, out_buf)
 
-                out_buf[:, 1] = project_unit(unorm, uv, vv)
-                nor_out.add_forcing(name, 'timeseries', nunits, out_buf)
-        print()
+                    out_buf[:, 1] = project_unit(unorm, uv, vv)
+                    nor_out.add_forcing(name, 'timeseries', nunits, out_buf)
+                print()
 
 
 if __name__ == "__main__":
