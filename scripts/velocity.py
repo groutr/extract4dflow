@@ -74,9 +74,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    pass
-
-
-
-
-
+    args = get_options()
+    main(args)
