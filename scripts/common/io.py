@@ -111,7 +111,7 @@ class BCFileWriter:
     def __exit__(self, type, value, traceback):
         self._filehandle.close()
 
-    def add_forcing(self, name, function, units, data):
+    def add_forcing(self, name, function, units, data, vectors=None):
         """Add forcing
         Args:
             name (str): Name
@@ -124,6 +124,10 @@ class BCFileWriter:
             None
         """
         T = [string.Template(self.forcing_template).substitute(name=name, function=function)]
+        if vectors is not None:
+            for v in vectors:
+                T.append(f"Vector = {v}")
+
         for i, (col, unit) in enumerate(units):
             T.append(f"Quantity = {col}")
             T.append(f"Unit = {unit}")
