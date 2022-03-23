@@ -27,6 +27,7 @@ def tangent_normal_vector(pts):
     unorm = np.column_stack((utan[:,1], -utan[:,0]))
     return utan, unorm
 
+
 def project_unit(unit, U, V):
     return unit[:,0] * U + unit[:,1] * V
 
@@ -57,21 +58,27 @@ def main(args):
                 ('tangentialvelocitybnd', 'm/s')]
         nunits = [('time', ref_time),
                 ('normalvelocitybnd', 'm/s')]
+        avunits = [('time', ref_time),
+                ('ux', 'm/s'), ('uy', 'm/s')]
 
         out_buf = np.empty((len(DS['time']), 2), dtype='float64')
-        out_buf[:, 0] = cftime.date2num(DS['time'].values, ref_time, calendar='julian') 
+        out_buf[:, 0] = cftime.date2num(DS['time'].values, ref_time, calendar='julian')
         with BCFileWriter(args.output/"TangentVelocity.bc") as tan_out:
             with BCFileWriter(args.output/"NormalVelocity.bc") as nor_out:
-                for i, (name, n) in enumerate(zip(pli_values['index'], nodes)):
-                    print(f"Station {name}".ljust(50), end="\r")
-                    uv = U[:, n].values
-                    vv = V[:, n].values
-                    out_buf[:, 1] = project_unit(utan[i, np.newaxis], uv, vv)
-                    tan_out.add_forcing(name, 'timeseries', tunits, out_buf)
+                with BCFileWriter(args.output/"AdvectionVelocity.bc") as av_out:
+                    for i, (name, n) in enumerate(zip(pli_values['index'], nodes)):
+                        print(f"Station {name}".ljust(50), end="\r")
+                        uv = U[:, n].values
+                        vv = V[:, n].values
+                        out_buf[:, 1] = project_unit(utan[i, np.newaxis], uv, vv)
+                        tan_out.add_forcing(name, 'timeseries', tunits, out_buf)
 
-                    out_buf[:, 1] = project_unit(unorm[i, np.newaxis], uv, vv)
-                    nor_out.add_forcing(name, 'timeseries', nunits, out_buf)
-                print()
+                        out_buf[:, 1] = project_unit(unorm[i, np.newaxis], uv, vv)
+                        nor_out.add_forcing(name, 'timeseries', nunits, out_buf)
+
+                        av_buf = np.column_stack([out_buf[:,0], uv, vv])
+                        av_out.add_forcing(name, "timeseries", avunits, av_buf, vectors=['uxuyadvectionvelocitybnd:ux,uy'])
+                    print()
 
 
 if __name__ == "__main__":
