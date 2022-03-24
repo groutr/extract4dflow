@@ -21,33 +21,52 @@ import argparse
 import pathlib
 import numpy as np
 from itertools import islice, compress
-from common.io import read_pli, write_pli, read_polygon
+from common.io import read_pli, read_xyn, write_pli, write_xyn, read_polygon
 from common.geometry import clip_point_to_roi
 
+def process_stations(d, polygon=None, n=1):
+    if polygon is not None:
+        idxs = clip_point_to_roi(polygon, d['values'])
+        d['values'] = d['values'][idxs]
+        d['index'] = list(compress(d['index']), idxs)
+
+    new_index, new_values = zip(*islice(zip(d['index'], d['values']), 0, None, n))
+    d['index'] = list(new_index)
+    d['values'] = np.asarray(new_values, dtype='float64')
+    return d
+        
 
 def main(args):
     pli = read_pli(args.pli)
-
+    
     if args.polygon:
         P = read_polygon(args.polygon)
-        idxs = clip_point_to_roi(P, pli['values'])
-        pli['values'] = pli['values'][idxs]
-        pli['index'] = list(compress(pli['index'], idxs))
-
-    new_index, new_values = zip(*islice(zip(pli['index'], pli['values']), 0, None, args.n))
-    pli['index'] = list(new_index)
-    pli['values'] = np.array(new_values)
+    else:
+        P = None
+    
+    pli = process_stations(pli, polygon=P, n=args.n)
     write_pli(args.output, pli)
+
+    if args.xyn:
+        xyn = read_xyn(args.xyn)
+        xyn = process_stations(xyn, polygon=P, n=args.n)
+        write_xyn(args.xyn_out, xyn)
 
 
 def get_options():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('pli', type=pathlib.Path, help="Path to PLI boundary file")
+    parser.add_argument('--xyn', type=pathlib.Path, help="Path to XYN file")
+    parser.add_argument('--xyn_out', type=pathlib.Path, help="XYN output path")
     parser.add_argument('-n', type=int, default=1, help="Decimation factor")
     parser.add_argument('-o', '--output', type=pathlib.Path, help="Output file path")
     parser.add_argument("-c", "--clip", dest="polygon", default=None, type=pathlib.Path, help="Use a polygon to select sites for output")
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.xyn and not args.xyn_out:
+        raise RuntimeError("When filtering xyn, --xyn_out must be set")
+    return args
 
 
 if __name__ == "__main__":

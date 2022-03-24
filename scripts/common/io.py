@@ -120,6 +120,7 @@ class BCFileWriter:
                 The ordering should match the ordering of the data columns.
             data (Iterable of lists): Number of columns in data and len(units) must match.
                 Data will be iterated thru row by row
+            vectors (list[str]):
         Returns:
             None
         """
@@ -155,21 +156,31 @@ def write_tim(path, data):
         np.savetxt(fh, data, fmt='%f', delimiter=' ')
 
 def read_pli(path, step=1):
-    index = []
     with open(path) as fp:
         name = next(fp).strip()  # Name row
         shape = list(map(int, next(fp).split()))  # shape
         assert shape[1] == 2
-        if step > 1:
-            # adjust shape by dividing by step
-            shape[0] = math.ceil(shape[0] / step)
-        values = np.empty(shape, dtype='float64')
-        for i, L in enumerate(islice(fp, 0, None, step)):
-            L = L.split()
-            if L:
-                values[i] = L[:2]
-                index.append(L[2])
+        index, values = _read_xyn(fp, step=step)
+        values = np.asarray(values, dtype='float64')
     return {'name': name, 'index': index, 'values': values}
+
+
+def read_xyn(path, step=1):
+    with open(path) as fp:
+        index, values = _read_xyn(fp, step=step)
+        values = np.asarray(values, dtype='float64')
+    return {'name': None, 'index': index, 'values': values}
+
+
+def _read_xyn(fp, step=1):
+    index = []
+    values = []
+    for L in islice(fp, 0, None, step):
+        L = L.split()
+        if L:
+            values.append(L[:2])
+            index.append(L[2])
+    return index, values
 
 
 def read_polygon(path):
@@ -204,6 +215,13 @@ def write_pli(path, pli):
         out.write("\n")
         for (lon, lat), name in zip(pli['values'], pli['index']):
             out.write(f"{lon} {lat}  {name}\n")
+            
+
+def write_xyn(path, xyn):
+    with open(path, 'w') as out:
+        for (lon, lat), name in zip(xyn['values'], xyn['index']):
+            out.write(f"{lon} {lat}  {name}\n")
+
 
 def read_csv(path, cols=None):
     # We could use pandas here, but we need more of a
