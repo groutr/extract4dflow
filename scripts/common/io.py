@@ -176,7 +176,7 @@ def _read_xyn(fp, step=1):
     index = []
     values = []
     for L in islice(fp, 0, None, step):
-        L = L.split()
+        L = L.split(maxsplit=2)
         if L:
             values.append(L[:2])
             index.append(L[2])
@@ -215,7 +215,7 @@ def write_pli(path, pli):
         out.write("\n")
         for (lon, lat), name in zip(pli['values'], pli['index']):
             out.write(f"{lon} {lat}  {name}\n")
-            
+
 
 def write_xyn(path, xyn):
     with open(path, 'w') as out:
