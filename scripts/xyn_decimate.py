@@ -1,27 +1,14 @@
 """
-PLI Decimate script.
+XYN Decimate script.
 
-Clip a PLI boundary to a desired polygon.
-
-Usage:
-python pli_decimate.py -c MyPolygon.txt -o Clipped.pli Boundary.pli
-    Clips Boundary.pli to the points that lie inside MyPolygon
-    and writes the result to Clipped.pli
-
-python pli_decimate.py -c MyPolygon.txt -o Clipped.pli -n 10 Boundary.pli
-    Clips Boundary.pli to the points that lie in inside MyPolygon.
-    When the output is written, only every 10th point is written to Clipped.pli.
-    Note that clipping happens before decimation.
-
-python pli_decimate.py -n 10 -o Decimated.pli Boundary.pli
-    Only do decimation of Boundary.pli by writing every 10th point to Decimated.pli
+Clip a XYN to a desired polygon.
 """
 
 import argparse
 import pathlib
 import numpy as np
 from itertools import islice, compress
-from common.io import read_pli, write_pli, read_polygon
+from common.io import read_xyn, write_xyn, read_polygon
 from common.geometry import clip_point_to_roi
 
 def process_stations(d, polygon=None, n=1):
@@ -37,21 +24,21 @@ def process_stations(d, polygon=None, n=1):
         
 
 def main(args):
-    pli = read_pli(args.pli)
+    xyn = read_xyn(args.xyn)
     
     if args.polygon:
         P = read_polygon(args.polygon)
     else:
         P = None
     
-    pli = process_stations(pli, polygon=P, n=args.n)
-    write_pli(args.output, pli)
+    xyn = process_stations(xyn, polygon=P, n=args.n)
+    write_xyn(args.output, xyn)
 
 
 def get_options():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('pli', type=pathlib.Path, help="Path to PLI boundary file")
+    parser.add_argument('xyn', type=pathlib.Path, help="Path to PLI boundary file")
     parser.add_argument('-n', type=int, default=1, help="Decimation factor")
     parser.add_argument('-o', '--output', type=pathlib.Path, help="Output file path")
     parser.add_argument("-c", "--clip", dest="polygon", default=None, type=pathlib.Path, help="Use a polygon to select sites for output")
