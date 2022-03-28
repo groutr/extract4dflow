@@ -15,7 +15,7 @@ def process_stations(d, polygon=None, n=1):
     if polygon is not None:
         idxs = clip_point_to_roi(polygon, d['values'])
         d['values'] = d['values'][idxs]
-        d['index'] = list(compress(d['index']), idxs)
+        d['index'] = list(compress(d['index'], idxs))
 
     new_index, new_values = zip(*islice(zip(d['index'], d['values']), 0, None, n))
     d['index'] = list(new_index)
