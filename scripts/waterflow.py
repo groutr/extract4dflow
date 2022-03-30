@@ -30,6 +30,7 @@ import string
 import datetime
 
 import pli_decimate
+import xyn_decimate
 import ext_slice
 import waterlevel
 import streamflow
@@ -38,14 +39,23 @@ from common.io import read_ext
 
 FILE_KEYS = (
         "global_pli",
+        "global_xyn",
         "region",
         "fort63",
         "boundary_csv",
         "global_boundary",
-        "streamlines"
+        "streamlines",
 )
 
 DIR_KEYS = ("output_directory", "streamflow_input")
+
+def check_keys(namespace, keys, raise_error=False):
+    keys = set(keys)
+    chk = keys.issubset(namespace.keys())
+    if raise_error:
+        raise KeyError(f"Missing {list(keys - namespace.keys())}")
+    else:
+        return chk
 
 
 def update_boundary(src_ext, wl, sf, ld, pli):
@@ -106,65 +116,84 @@ def main(args):
     region_stem = config["region"].stem
     out_dir = config["output_directory"]
 
-    print("PLI Decimate...")
-    pli_decimate_args = argparse.Namespace()
-    pli_decimate_args.n = 1
-    pli_decimate_args.pli = config["global_pli"]
-    pli_decimate_args.polygon = config["region"]
-    pli_out = out_dir.joinpath(f"{pli_decimate_args.pli.stem}_slice_{region_stem}.pli")
-    pli_decimate_args.output = pli_out
-    print(pli_decimate_args)
-    pli_decimate.main(pli_decimate_args)
-    assert pli_out.exists()
-    print(pli_out)
+    # Check if global_pli and region are defined then we clip pli
+    if check_keys(config, ("global_pli", "region")):
+        print("PLI Decimate...")
+        pli_decimate_args = argparse.Namespace()
+        pli_decimate_args.n = 1
+        pli_decimate_args.pli = config["global_pli"]
+        pli_decimate_args.polygon = config["region"]
+        pli_out = out_dir.joinpath(f"{pli_decimate_args.pli.stem}_slice_{region_stem}.pli")
+        pli_decimate_args.output = pli_out
+        print(pli_decimate_args)
+        pli_decimate.main(pli_decimate_args)
+        assert pli_out.exists()
+        print(pli_out)
 
-    print("EXT Slice...")
-    ext_slice_args = argparse.Namespace()
-    ext_slice_args.boundary_csv = config["boundary_csv"]
-    ext_slice_args.polygon = config["region"]
-    ext_slice_args.ext = config["global_boundary"]
-    ext_slice_args.streamlines = config["streamlines"]
-    ext_slice_args.output_dir = out_dir
-    ext_slice.main(ext_slice_args)
-    [ext_out] = list(out_dir.glob(f"*_slice_{region_stem}.ext"))
-    [boundary_csv] = list(out_dir.glob(f"{config['boundary_csv'].stem}_slice_{region_stem}.csv"))
-    print(ext_out)
+    if check_keys(config, ("global_xyn", "region")):
+        print("XYN Decimate...")
+        xyn_decimate_args = argparse.Namespace()
+        xyn_decimate_args.n = 1
+        xyn_decimate_args.xyn = config["global_xyn"]
+        xyn_decimate_args.polygon = config["region"]
+        xyn_out = out_dir.joinpath(f"{xyn_decimate_args.xyn.stem}_slice_{region_stem}.xyn")
+        xyn_decimate_args.output = xyn_out
+        print(xyn_decimate_args)
+        xyn_decimate.main(xyn_decimate_args)
+        assert xyn_out.exists()
+        print(xyn_out)
 
-    print("Waterlevel extraction...")
-    waterlevel_args = argparse.Namespace()
-    waterlevel_args.fort63 = config["fort63"]
-    waterlevel_args.boundary_csv = boundary_csv
-    wl_out = out_dir.joinpath(f"waterlevel_slice_{region_stem}.bc")
-    waterlevel_args.output = wl_out
-    waterlevel.main(waterlevel_args)
-    assert wl_out.exists()
-    print(wl_out)
+    if check_keys(config, ("region", "global_boundary", "streamlines", "boundary_csv")):
+        print("EXT Slice...")
+        ext_slice_args = argparse.Namespace()
+        ext_slice_args.boundary_csv = config["boundary_csv"]
+        ext_slice_args.polygon = config["region"]
+        ext_slice_args.ext = config["global_boundary"]
+        ext_slice_args.streamlines = config["streamlines"]
+        ext_slice_args.output_dir = out_dir
+        ext_slice.main(ext_slice_args)
+        [ext_out] = list(out_dir.glob(f"*_slice_{region_stem}.ext"))
+        [boundary_csv] = list(out_dir.glob(f"{config['boundary_csv'].stem}_slice_{region_stem}.csv"))
+        print(ext_out)
 
-    print("Streamflow extraction...")
-    streamflow_args = argparse.Namespace()
-    streamflow_args.comm_id_path = boundary_csv
-    streamflow_args.start_time = start_time
-    streamflow_args.stop_time = stop_time
-    streamflow_args.input_dir = config["streamflow_input"]
-    sf_out = out_dir.joinpath(f"streamflow_slice_{region_stem}.bc")
-    streamflow_args.output_dir = sf_out
-    print(streamflow_args)
-    streamflow.main(streamflow_args)
-    assert sf_out.exists()
-    print(sf_out)
+    if check_keys(config, ("fort63",)):
+        print("Waterlevel extraction...")
+        waterlevel_args = argparse.Namespace()
+        waterlevel_args.fort63 = config["fort63"]
+        waterlevel_args.boundary_csv = boundary_csv
+        wl_out = out_dir.joinpath(f"waterlevel_slice_{region_stem}.bc")
+        waterlevel_args.output = wl_out
+        waterlevel.main(waterlevel_args)
+        assert wl_out.exists()
+        print(wl_out)
 
-    print("Lateral flow extraction...")
-    qlateral_args = argparse.Namespace()
-    qlateral_args.comm_id_path = boundary_csv
-    qlateral_args.start_time = start_time
-    qlateral_args.stop_time = stop_time
-    qlateral_args.input_dir = config["streamflow_input"]
-    ql_out = out_dir.joinpath(f"qlateral_slice_{region_stem}.bc")
-    qlateral_args.output_dir = ql_out
-    print(qlateral_args)
-    qlateral.main(qlateral_args)
-    assert ql_out.exists()
-    print(ql_out)
+    if check_keys(config, ("streamflow_input",)):
+        print("Streamflow extraction...")
+        streamflow_args = argparse.Namespace()
+        streamflow_args.comm_id_path = boundary_csv
+        streamflow_args.start_time = start_time
+        streamflow_args.stop_time = stop_time
+        streamflow_args.input_dir = config["streamflow_input"]
+        sf_out = out_dir.joinpath(f"streamflow_slice_{region_stem}.bc")
+        streamflow_args.output_dir = sf_out
+        print(streamflow_args)
+        streamflow.main(streamflow_args)
+        assert sf_out.exists()
+        print(sf_out)
+
+    if check_keys(config, ("streamflow_input",)):
+        print("Lateral flow extraction...")
+        qlateral_args = argparse.Namespace()
+        qlateral_args.comm_id_path = boundary_csv
+        qlateral_args.start_time = start_time
+        qlateral_args.stop_time = stop_time
+        qlateral_args.input_dir = config["streamflow_input"]
+        ql_out = out_dir.joinpath(f"qlateral_slice_{region_stem}.bc")
+        qlateral_args.output_dir = ql_out
+        print(qlateral_args)
+        qlateral.main(qlateral_args)
+        assert ql_out.exists()
+        print(ql_out)
 
     print("Updating boundary", ext_out)
     update_boundary(ext_out, wl_out.name, sf_out.name, ql_out.name, pli_out.name)
