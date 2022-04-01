@@ -176,7 +176,7 @@ def _read_xyn(fp, step=1):
     index = []
     values = []
     for L in islice(fp, 0, None, step):
-        L = L.split(maxsplit=2)
+        L = L.strip().split(maxsplit=2)
         if L:
             values.append(L[:2])
             index.append(L[2])
