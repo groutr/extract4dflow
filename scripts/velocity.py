@@ -24,7 +24,7 @@ def tangent_normal_vector(pts):
     diff = np.diff(pts, axis=0)
     dists = (diff ** 2).sum(axis=1) ** 0.5
     utan = diff/dists[:, np.newaxis]
-    unorm = np.column_stack((utan[:,1], -utan[:,0]))
+    unorm = np.column_stack((-utan[:,1], utan[:,0]))
     return utan, unorm
 
 
