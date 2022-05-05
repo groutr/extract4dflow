@@ -43,7 +43,7 @@ def invalid_mask(var, chunksize=2**18):
         rv_view = rv[i:i+chunksize]
         buf_view = buf[:, :rv_view.shape[0]]
         #np.equal(var[:, i:i+chunksize], var._FillValue, out=buf_view)
-        cols = np.ma.getmaskarray(var[:, i:i+chunksize])
+        buf_view[:] = np.ma.getmaskarray(var[:, i:i+chunksize])
         np.any(buf_view, axis=0, out=rv_view)
         np.logical_not(rv_view, out=rv_view)
     return rv
@@ -74,17 +74,26 @@ def main(args):
         ref_time = time_col.units.rstrip('UTC').rstrip()
         units = [('time', ref_time),
                  ('waterlevelbnd', 'm')]
-        out_buf = np.empty((len(time_col), 2), dtype='float64')
-        out_buf[:, 0] = time_col[:]
+        
         if args.output.is_dir():
-            args.output = args.output/f"waterlevel.bc"
+            if args.initialxyn:
+                args.output = args.output/"initialwaterlevel.xyn"
+            else:
+                args.output = args.output/"waterlevel.bc"
 
-        with BCFileWriter(args.output) as bc_out:
-            print("Writing BC output", bc_out.filename)
-            for name, station in zip(csv_data['NWMCommID'], stations):
-                print(f"Station {name} ({station})".ljust(50), end="\r")
-                out_buf[:, 1] = np.ma.getdata(zeta[:, station])
-                bc_out.add_forcing(name, 'timeseries', units, out_buf)
+        if args.initialxyn:
+            values = zeta[0, stations]
+            index = adpts[stations]
+            write_xyn(args.output, {'name': None, 'index': index, 'values': values})
+        else:
+            out_buf = np.empty((len(time_col), 2), dtype='float64')
+            out_buf[:, 0] = time_col[:]
+            with BCFileWriter(args.output) as bc_out:
+                print("Writing BC output", bc_out.filename)
+                for name, station in zip(csv_data['NWMCommID'], stations):
+                    print(f"Station {name} ({station})".ljust(50), end="\r")
+                    out_buf[:, 1] = np.ma.getdata(zeta[:, station])
+                    bc_out.add_forcing(name, 'timeseries', units, out_buf)
         print()
 
 def get_options():
@@ -92,6 +101,7 @@ def get_options():
 
     parser.add_argument('fort63', type=pathlib.Path, help="Adcirc fort.63.nc path")
     parser.add_argument('boundary_csv', type=pathlib.Path, help="Path to boundary csv file")
+    parser.add_argument('--initialxyn', action='store_true', help="Only extract intial value instead of full timeseries")
     parser.add_argument("-o", "--output", type=pathlib.Path, default=pathlib.Path('.'), help="Path to bc output directory. Default is current directory")
 
     return parser.parse_args()
