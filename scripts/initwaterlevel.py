@@ -42,7 +42,7 @@ def invalid_mask(var, chunksize=2**18):
         rv_view = rv[i:i+chunksize]
         buf_view = buf[:, :rv_view.shape[0]]
         #np.equal(var[:, i:i+chunksize], var._FillValue, out=buf_view)
-        cols = np.ma.getmaskarray(var[:, i:i+chunksize])
+        buf_view[:] = np.ma.getmaskarray(var[:, i:i+chunksize])
         np.any(buf_view, axis=0, out=rv_view)
         np.logical_not(rv_view, out=rv_view)
     return rv
@@ -50,7 +50,7 @@ def invalid_mask(var, chunksize=2**18):
 
 def main(args):
     with netCDF4.Dataset(args.mesh, mode='r') as ds:
-        dfpts = np.column_stack([ds['NetNode_x'], ds['NetNode_y']])
+        dfpts = np.asarray(np.column_stack([ds['NetNode_x'], ds['NetNode_y']]))
 
     with netCDF4.Dataset(args.fort63, mode='r') as ds:
         zeta = ds.variables['zeta']
@@ -69,9 +69,9 @@ def main(args):
         if args.output.is_dir():
             args.output = args.output/"initialwaterlevel.xyn"
 
-        values = zeta[0, stations]
-        index = adpts[stations]
-        write_xyn(args.output, {'name': None, 'index': index, 'values': values})
+        index = zeta[0][stations]   # Super slow with nd indexing
+        print("Writing XYN for initial conditions")
+        write_xyn(args.output, {'name': None, 'index': index, 'values': dfpts})
 
 def get_options():
     parser = argparse.ArgumentParser()
