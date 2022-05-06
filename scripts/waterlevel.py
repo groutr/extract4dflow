@@ -17,7 +17,7 @@ import time
 import netCDF4
 import numpy as np
 
-from common.io import BCFileWriter, read_csv
+from common.io import BCFileWriter, read_pli
 from common.geometry import kd_nearest_neighbor
 
 
@@ -50,8 +50,8 @@ def invalid_mask(var, chunksize=2**18):
 
 
 def main(args):
-    print("Reading Boundary CSV")
-    csv_data = read_csv(args.boundary_csv)
+    print("Reading PLI")
+    pli_data = read_pli(args.pli)
 
     with netCDF4.Dataset(args.fort63, mode='r') as ds:
         zeta = ds.variables['zeta']
@@ -59,15 +59,12 @@ def main(args):
         mask = invalid_mask(zeta)
         valid_stations = mask.nonzero()[0]
         print("Masking coordinates")
-        #adlons = ds.variables['x'][:][mask]
-        #adlats = ds.variables['y'][:][mask]
         adlons = np.ma.getdata(ds.variables['x'][mask])
         adlats = np.ma.getdata(ds.variables['y'][mask])
 
         adpts = np.column_stack([adlons, adlats])
-        csvpts = np.column_stack([csv_data['long'], csv_data['lat']])
         print("Querying nearest points")
-        _, CN = kd_nearest_neighbor(adpts, csvpts)
+        _, CN = kd_nearest_neighbor(adpts, pli_data['values'])
         stations = valid_stations[CN]
 
         time_col = ds.variables['time']
@@ -76,32 +73,23 @@ def main(args):
                  ('waterlevelbnd', 'm')]
         
         if args.output.is_dir():
-            if args.initialxyn:
-                args.output = args.output/"initialwaterlevel.xyn"
-            else:
-                args.output = args.output/"waterlevel.bc"
-
-        if args.initialxyn:
-            values = zeta[0, stations]
-            index = adpts[stations]
-            write_xyn(args.output, {'name': None, 'index': index, 'values': values})
-        else:
-            out_buf = np.empty((len(time_col), 2), dtype='float64')
-            out_buf[:, 0] = time_col[:]
-            with BCFileWriter(args.output) as bc_out:
-                print("Writing BC output", bc_out.filename)
-                for name, station in zip(csv_data['NWMCommID'], stations):
-                    print(f"Station {name} ({station})".ljust(50), end="\r")
-                    out_buf[:, 1] = np.ma.getdata(zeta[:, station])
-                    bc_out.add_forcing(name, 'timeseries', units, out_buf)
+            args.output = args.output/"waterlevel.bc"
+        
+        out_buf = np.empty((len(time_col), 2), dtype='float64')
+        out_buf[:, 0] = time_col[:]
+        with BCFileWriter(args.output) as bc_out:
+            print("Writing BC output", bc_out.filename)
+            for name, station in zip(pli_data['index'], stations):
+                print(f"Station {name} ({station})".ljust(50), end="\r")
+                out_buf[:, 1] = np.ma.getdata(zeta[:, station])
+                bc_out.add_forcing(name, 'timeseries', units, out_buf)
         print()
 
 def get_options():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('fort63', type=pathlib.Path, help="Adcirc fort.63.nc path")
-    parser.add_argument('boundary_csv', type=pathlib.Path, help="Path to boundary csv file")
-    parser.add_argument('--initialxyn', action='store_true', help="Only extract intial value instead of full timeseries")
+    parser.add_argument('pli', type=pathlib.Path, help="Path to PLI boundary file")
     parser.add_argument("-o", "--output", type=pathlib.Path, default=pathlib.Path('.'), help="Path to bc output directory. Default is current directory")
 
     return parser.parse_args()
