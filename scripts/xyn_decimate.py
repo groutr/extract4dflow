@@ -12,10 +12,15 @@ from common.io import read_xyn, write_xyn, read_polygon
 from common.geometry import clip_point_to_roi
 
 def process_stations(d, polygon=None, n=1):
+    # Remove duplicate station labels
+    uniq_index, uniq_idxs = np.unique(d['index'], return_index=True)
+    d['index'] = uniq_index
+    d['values'] = d['values'][uniq_idxs]
+
     if polygon is not None:
         idxs = clip_point_to_roi(polygon, d['values'])
         d['values'] = d['values'][idxs]
-        d['index'] = list(compress(d['index'], idxs))
+        d['index'] = d['index'][idxs]
 
     new_index, new_values = zip(*islice(zip(d['index'], d['values']), 0, None, n))
     d['index'] = list(new_index)
