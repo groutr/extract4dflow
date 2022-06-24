@@ -58,6 +58,7 @@ def main(args):
         print("Masking invalid stations")
         mask = invalid_mask(zeta)
         valid_stations = mask.nonzero()[0]
+        print(f"{len(mask) - len(valid_stations)} of {len(mask)} discarded")
         print("Masking coordinates")
         adlons = np.ma.getdata(ds.variables['x'][mask])
         adlats = np.ma.getdata(ds.variables['y'][mask])
